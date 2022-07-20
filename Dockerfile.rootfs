@@ -97,6 +97,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     nvme-cli=1.5-1ubuntu1.2 \
     openssh-server=1:7.6p1-4ubuntu0.7 \
     smartmontools=6.5+svn4324-1ubuntu0.1 \
+    socat=1.7.3.2-2ubuntu2 \
     sshfs=2.8-1 \
     sshuttle=0.78.3-1ubuntu1.1 \
     tcpdump=4.9.3-0ubuntu0.18.04.2 \
