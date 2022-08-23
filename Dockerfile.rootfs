@@ -47,8 +47,8 @@ RUN apt-get update && apt-get install -y \
 RUN apt-get update && apt-get install --no-install-recommends -y \
     apt-transport-https=1.6.12ubuntu0.2 \
     ca-certificates=20211016~18.04.1 \
-    curl=7.58.0-2ubuntu3.18 \
-    gnupg-agent=2.2.4-1ubuntu1.5 \
+    curl=7.58.0-2ubuntu3.19 \
+    gnupg-agent=2.2.4-1ubuntu1.6 \
     software-properties-common=0.96.24.32.18
 RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
 RUN add-apt-repository "deb [arch=arm64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
@@ -74,7 +74,7 @@ RUN if [ -z "$AGENT_MODE" ]; then \
 RUN apt-get update && apt-get install --no-install-recommends -y \
     ansible=2.5.1+dfsg-1ubuntu0.1 \
     autossh=1.4e-4 \
-    bluez=5.48-0ubuntu3.8 \
+    bluez=5.48-0ubuntu3.9 \
     bridge-utils=1.5-15ubuntu1 \
     bwm-ng=0.6.1-5 \
     haveged=1.9.1-6 \
