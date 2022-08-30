@@ -1,0 +1,64 @@
+#!/bin/sh
+export TERM=xterm-256color
+
+echo ' __          __               _       ____   _____ '
+echo ' \ \        / /              | |     / __ \ / ____|'
+echo '  \ \  /\  / /_ _  __ _  __ _| | ___| |  | | (___  '
+echo '   \ \/  \/ / _` |/ _` |/ _` | |/ _ \ |  | |\___ \ '
+echo '    \  /\  / (_| | (_| | (_| | |  __/ |__| |____) |'
+echo '     \/  \/ \__,_|\__, |\__, |_|\___|\____/|_____/ '
+echo '                   __/ | __/ |                     '
+echo '                  |___/ |___/                      '
+echo
+
+[ -r /etc/lsb-release ] && . /etc/lsb-release
+
+if [ -z "$DISTRIB_DESCRIPTION" ] && [ -x /usr/bin/lsb_release ]; then
+        # Fall back to using the very slow lsb_release utility
+        DISTRIB_DESCRIPTION=$(lsb_release -s -d)
+fi
+
+RED=$(tput setaf 1)
+NORMAL=$(tput sgr0)
+
+date=`date`
+read load_one load_five load_fifteen load_rest < /proc/loadavg
+root_usage=`df -h / | awk '/\// {print $(NF-1)}'`
+plugin_usage=`df -h /media/plugin-data | awk '/\// {print $(NF-1)}'`
+memory_usage=`free -m | awk '/Mem/ { printf("%3i%%", $3/$2*100) }'`
+swap_usage=`free -m | awk '/Swap/ { printf("%3i%%", $3/$2*100) }'`
+processes=`ps ax | wc -l`
+ipaddr=`hostname -I | awk '{print $1}'`
+users=`users | wc -w`
+waggle_os=`cat /etc/waggle_version_os | cut -d ' ' -f 1`
+waggle_os_details=`cat /etc/waggle_version_os | cut -d ' ' -f 2-`
+waggle_vsn=`cat /etc/waggle/vsn 2> /dev/null`
+uptime=`uptime | grep -ohe 'up .*' | sed 's/,/\ hours/g' | awk '{ printf $2" "$3 }'`
+system=`lshw -json -quiet -class system | jq .product -r`
+
+boot="Unknown"
+emmc_mnt=$(lsblk /dev/mmcblk0p1 --json | jq -r '.blockdevices[].mountpoint')
+sd_mnt=$(lsblk /dev/mmcblk1p1 --json | jq -r '.blockdevices[].mountpoint')
+root_mnt="/media/root-ro"
+if [ "${emmc_mnt}" = "${root_mnt}" ]; then
+	boot="Normal"
+fi
+if [ "${sd_mnt}" = "${root_mnt}" ]; then
+	boot="${RED}Recovery${NORMAL}"
+fi
+
+echo "System information as of: $date"
+echo
+printf "System:      \t%s\n" "$system"
+printf "System load: \t%s %s %s (1, 5, 15 min)\n" $load_one $load_five $load_fifteen
+printf "Memory usage:\t%s\tIP Address:\t%s\n" $memory_usage $ipaddr
+printf "Usage on /:  \t%s\tUptime:    \t%s\n" $root_usage "$uptime"
+printf "Plugin usage:\t%s\tUsers:     \t%s\n" $plugin_usage $users
+printf "Swap usage:  \t%s\tProcesses: \t%s\n" $swap_usage $processes
+printf "VSN:         \t%s\tBoot mode: \t%s\n" "${waggle_vsn:=n/a}" "${boot}"
+echo
+
+printf "%s (%s %s %s)\n" "$DISTRIB_DESCRIPTION" "$(uname -o)" "$(uname -r)" "$(uname -m)"
+printf "Waggle OS Version: %s\n" $waggle_os
+printf " %s\n" "$waggle_os_details"
+echo

@@ -1,0 +1,200 @@
+# jetson-gpio-common
+# none
+
+# python-jetson-gpio
+python=2.7.15~rc1-1
+
+# python3-jetson-gpio
+python3=3.6.7-1~18.04
+
+# nvidia-l4t-3d-core
+libc6=2.27-3ubuntu1.2
+libegl1=1.0.0-2ubuntu2.3
+libgcc1=1:8.4.0-1ubuntu1~18.04
+libstdc++6=8.4.0-1ubuntu1~18.04
+libx11-6=2:1.6.4-3ubuntu0.4
+libxext6=2:1.3.3-1
+
+# nvidia-l4t-apt-source
+# none
+
+# nvidia-l4t-camera
+libc6=2.27-3ubuntu1.2
+libegl1=1.0.0-2ubuntu2.3
+libexpat1=2.2.5-3ubuntu0.7
+libgcc1=1:8.4.0-1ubuntu1~18.04
+libgles2=1.0.0-2ubuntu2.3
+libglvnd0=1.0.0-2ubuntu2.3
+libstdc++6=8.4.0-1ubuntu1~18.04
+
+# nvidia-l4t-configs
+# none
+
+# nvidia-l4t-core
+libc6=2.27-3ubuntu1.2
+libegl1=1.0.0-2ubuntu2.3
+libexpat1=2.2.5-3ubuntu0.7
+libgcc1=1:8.4.0-1ubuntu1~18.04
+libstdc++6=8.4.0-1ubuntu1~18.04
+
+# nvidia-l4t-cuda
+libc6=2.27-3ubuntu1.2
+
+# nvidia-l4t-firmware
+libc6=2.27-3ubuntu1.2
+libgcc1=1:8.4.0-1ubuntu1~18.04
+libstdc++6=8.4.0-1ubuntu1~18.04
+
+# nvidia-l4t-graphics-demos
+libc6=2.27-3ubuntu1.2
+libegl1=1.0.0-2ubuntu2.3
+libgles2=1.0.0-2ubuntu2.3
+libwayland-client0=1.16.0-1ubuntu1.1~18.04.3
+libwayland-egl1=1.16.0-1ubuntu1.1~18.04.3
+libx11-6=2:1.6.4-3ubuntu0.4
+libxkbcommon0=0.8.2-1~ubuntu18.04.1
+
+# nvidia-l4t-gstreamer
+libasound2=1.1.3-5ubuntu0.6
+libbsd0=0.8.7-1ubuntu0.1
+libc6=2.27-3ubuntu1.2
+libegl1=1.0.0-2ubuntu2.3
+libexpat1=2.2.5-3ubuntu0.7
+libgcc1=1:8.4.0-1ubuntu1~18.04
+libgles2=1.0.0-2ubuntu2.3
+libglib2.0-0=2.56.4-0ubuntu0.18.04.9
+libglvnd0=1.0.0-2ubuntu2.3
+libgstreamer1.0-0=1.14.5-0ubuntu1~18.04.2
+libgstreamer-plugins-bad1.0-0=1.14.5-0ubuntu1~18.04.1
+libgstreamer-plugins-base1.0-0=1.14.5-0ubuntu1~18.04.3
+libpcre3=2:8.39-9
+libstdc++6=8.4.0-1ubuntu1~18.04
+libwayland-client0=1.16.0-1ubuntu1.1~18.04.3
+libwayland-egl1=1.16.0-1ubuntu1.1~18.04.3
+libx11-6=2:1.6.4-3ubuntu0.4
+libxcb1=1.13-2~ubuntu18.04
+libxdmcp6=1:1.1.2-3
+libxext6=2:1.3.3-1
+
+# nvidia-l4t-init
+libc6=2.27-3ubuntu1.2
+libstdc++6=8.4.0-1ubuntu1~18.04
+
+# nvidia-l4t-initrd
+# none
+
+# nvidia-l4t-jetson-io
+device-tree-compiler=1.4.5-3
+mount=2.31.1-0.4ubuntu3.7
+python3=3.6.7-1~18.04
+util-linux=2.31.1-0.4ubuntu3.7
+
+# nvidia-l4t-multimedia-utils
+libc6=2.27-3ubuntu1.2
+libcairo2=1.15.10-2ubuntu0.1
+libdatrie1=0.2.10-7
+libegl1=1.0.0-2ubuntu2.3
+libexpat1=2.2.5-3ubuntu0.7
+libfontconfig1=2.12.6-0ubuntu2
+libgcc1=1:8.4.0-1ubuntu1~18.04
+libgles2=1.0.0-2ubuntu2.3
+libglib2.0-0=2.56.4-0ubuntu0.18.04.9
+libglvnd0=1.0.0-2ubuntu2.3
+libharfbuzz0b=1.7.2-1ubuntu1
+libpangoft2-1.0-0=1.40.14-1ubuntu0.1
+libpcre3=2:8.39-9
+libpixman-1-0=0.34.0-2
+libstdc++6=8.4.0-1ubuntu1~18.04
+libx11-6=2:1.6.4-3ubuntu0.4
+libxau6=1:1.0.8-1ubuntu1
+libxcb1=1.13-2~ubuntu18.04
+libxdmcp6=1:1.1.2-3
+libxext6=2:1.3.3-1
+libxrender1=1:0.9.10-1
+zlib1g=1:1.2.11.dfsg-0ubuntu2
+
+# nvidia-l4t-multimedia
+libasound2=1.1.3-5ubuntu0.6
+libc6=2.27-3ubuntu1.2
+libcairo2=1.15.10-2ubuntu0.1
+libdatrie1=0.2.10-7
+libegl1=1.0.0-2ubuntu2.3
+libexpat1=2.2.5-3ubuntu0.7
+libfontconfig1=2.12.6-0ubuntu2
+libgcc1=1:8.4.0-1ubuntu1~18.04
+libgles2=1.0.0-2ubuntu2.3
+libglib2.0-0=2.56.4-0ubuntu0.18.04.9
+libglvnd0=1.0.0-2ubuntu2.3
+libgstreamer1.0-0=1.14.5-0ubuntu1~18.04.2
+libgstreamer-plugins-bad1.0-0=1.14.5-0ubuntu1~18.04.1
+libgstreamer-plugins-base1.0-0=1.14.5-0ubuntu1~18.04.3
+libharfbuzz0b=1.7.2-1ubuntu1
+libpango-1.0-0=1.40.14-1ubuntu0.1
+libpangocairo-1.0-0=1.40.14-1ubuntu0.1
+libpangoft2-1.0-0=1.40.14-1ubuntu0.1
+libpcre3=2:8.39-9
+libpixman-1-0=0.34.0-2
+libstdc++6=8.4.0-1ubuntu1~18.04
+libx11-6=2:1.6.4-3ubuntu0.4
+libxau6=1:1.0.8-1ubuntu1
+libxcb1=1.13-2~ubuntu18.04
+libxdmcp6=1:1.1.2-3
+libxext6=2:1.3.3-1
+libxrender1=1:0.9.10-1
+zlib1g=1:1.2.11.dfsg-0ubuntu2
+
+# nvidia-l4t-oem-config
+# none
+
+# nvidia-l4t-tools
+libc6=2.27-3ubuntu1.2
+libstdc++6=8.4.0-1ubuntu1~18.04
+
+# nvidia-l4t-wayland
+libc6=2.27-3ubuntu1.2
+libffi6=3.2.1-8
+libwayland-client0=1.16.0-1ubuntu1.1~18.04.3
+libwayland-server0=1.16.0-1ubuntu1.1~18.04.3
+
+# nvidia-l4t-weston
+libaudit1=1:2.8.2-1ubuntu1
+libc6=2.27-3ubuntu1.2
+libcairo2=1.15.10-2ubuntu0.1
+libdrm2=2.4.101-2~18.04.1
+libegl1=1.0.0-2ubuntu2.3
+libevdev2=1.5.8+dfsg-1ubuntu0.2
+libffi6=3.2.1-8
+libgbm1=20.0.8-0ubuntu1~18.04.1
+libgles2=1.0.0-2ubuntu2.3
+libinput10=1.10.4-1ubuntu0.18.04.3
+libjpeg-turbo8=1.5.2-0ubuntu5.18.04.4
+libpam0g=1.1.8-3.6ubuntu2.18.04.2
+libpixman-1-0=0.34.0-2
+libpng16-16=1.6.34-1ubuntu0.18.04.2
+libstdc++6=8.4.0-1ubuntu1~18.04
+libudev1=237-3ubuntu10.53
+libunwind8=1.2.1-8
+libwayland-client0=1.16.0-1ubuntu1.1~18.04.3
+libwayland-cursor0=1.16.0-1ubuntu1.1~18.04.3
+libwayland-egl1=1.16.0-1ubuntu1.1~18.04.3
+libwayland-server0=1.16.0-1ubuntu1.1~18.04.3
+libxkbcommon0=0.8.2-1~ubuntu18.04.1
+zlib1g=1:1.2.11.dfsg-0ubuntu2
+
+# nvidia-l4t-x11
+libc6=2.27-3ubuntu1.2
+
+# nvidia-l4t-xusb-firmware
+# none
+
+# nvidia-l4t-kernel
+# none
+
+# nvidia-l4t-kernel-headers
+# none
+
+# nvidia-l4t-kernel-dtbs
+device-tree-compiler=1.4.5-3
+
+# nvidia-l4t-bootloader
+# none

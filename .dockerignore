@@ -1,0 +1,4 @@
+.git
+*.tgz
+*.tbz2
+release/*.tbz2

@@ -1,0 +1,14 @@
+#!/bin/bash -ex
+
+# Fake NVidia "make sparse image" program
+#  Simulates creating a sparse disk from the passed in IMG
+#  called with the following syntax: mksparse --fillpattern=0 IMG.raw IMG
+
+FILL=$1
+RAWIMG=$2
+IMG=$3
+
+# run image dumpe2fs to validate provided image is a valide image file
+dumpe2fs $RAWIMG
+# create small fake image to improve overall test time
+echo "FAKE IMAGE" > $3

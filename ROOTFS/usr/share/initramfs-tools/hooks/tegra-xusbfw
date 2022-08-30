@@ -1,0 +1,20 @@
+#!/bin/sh -e
+
+# Work around necessary for when rebuilding the ramdisk to enable the
+#  USB ports on the NX dev kit to function
+
+PREREQS=""
+
+prereqs() { echo "$PREREQS"; }
+
+case "$1" in
+    prereqs)
+    prereqs
+    exit 0
+    ;;
+esac
+
+. /usr/share/initramfs-tools/hook-functions
+
+copy_exec /lib/firmware/tegra19x_xusb_firmware /lib/firmware/
+copy_exec /lib/firmware/tegra18x_xusb_firmware /lib/firmware/

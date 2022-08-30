@@ -1,0 +1,270 @@
+# define the container to get the qemu binaries
+FROM amd64/ubuntu:bionic-20200921 as qemu_src
+# download the qemu static binaries
+RUN apt-get update && apt-get install --no-install-recommends -y qemu-user-static
+
+# rootfs Definition
+FROM arm64v8/ubuntu:bionic-20200921 as rootfs
+
+# add support for transparent cross architecture builds
+COPY --from=qemu_src /usr/bin/qemu-aarch64-static /usr/bin/qemu-aarch64-static
+
+# Install systemd first to ensure future installs have it
+RUN apt-get update && apt-get install -y systemd-sysv=237-3ubuntu10.50
+
+# Setup the locales to ensure future installs have it
+RUN apt-get update && apt-get install -y locales=2.27-3ubuntu1.5
+RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
+    locale-gen
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# install core ubuntu meta-packages
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    ubuntu-minimal=1.417.5 \
+    ubuntu-server=1.417.5 \
+    ubuntu-standard=1.417.5
+
+# list of L4T Debian packages that must be installed
+ARG L4T_DEPENDS
+
+# Install L4T dependancies
+RUN apt-get update && apt-get install --no-install-recommends -y $L4T_DEPENDS
+
+RUN apt-get update && apt-get install -y \
+    python=2.7.15~rc1-1 \
+    python-pip=9.0.1-2.3~ubuntu1.18.04.5 \
+    python-click=6.7-3 \
+    python3=3.6.7-1~18.04 \
+    python3-pip=9.0.1-2.3~ubuntu1.18.04.5 \
+    python3-venv=3.6.7-1~18.04 \
+    python3-click=6.7-3
+
+## Install docker - start
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    apt-transport-https=1.6.12ubuntu0.2 \
+    ca-certificates=20211016~18.04.1 \
+    curl=7.58.0-2ubuntu3.18 \
+    gnupg-agent=2.2.4-1ubuntu1.5 \
+    software-properties-common=0.96.24.32.18
+RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+RUN add-apt-repository "deb [arch=arm64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+RUN apt-get update && apt-get install -y \
+    docker-ce=5:19.03.13~3-0~ubuntu-bionic \
+    docker-ce-cli=5:19.03.13~3-0~ubuntu-bionic \
+    containerd.io=1.3.7-1
+# disable docker from auto-start on boot (will be enabled in factory provision)
+RUN systemctl disable docker.service
+## Install docker - end
+
+# flag to determine NX build mode (put as deep as possible to prevent unnecessary rebuild steps)
+ARG AGENT_MODE
+
+# Install K3S (skip enable, will be enabled in factory provision)
+RUN if [ -z "$AGENT_MODE" ]; then \
+    curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=v1.20.2+k3s1 INSTALL_K3S_SKIP_ENABLE=true K3S_CLUSTER_SECRET=4tX0DUZ0uQknRtVUAKjt sh - ; \
+    else \
+    curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=v1.20.2+k3s1 INSTALL_K3S_SKIP_ENABLE=true K3S_URL=https://10.31.81.1:6443 K3S_TOKEN=4tX0DUZ0uQknRtVUAKjt sh - ; \
+    fi
+
+# Install necessary items & helpful tools (common)
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    ansible=2.5.1+dfsg-1ubuntu0.1 \
+    autossh=1.4e-4 \
+    bluez=5.48-0ubuntu3.8 \
+    bridge-utils=1.5-15ubuntu1 \
+    bwm-ng=0.6.1-5 \
+    haveged=1.9.1-6 \
+    iftop=1.0~pre4-4 \
+    ifupdown=0.8.17ubuntu1.1 \
+    i2c-tools=4.0-2 \
+    iotop=0.6-2 \
+    iperf=2.0.10+dfsg1-1ubuntu0.18.04.2 \
+    iperf3=3.1.3-1 \
+    iputils-arping=3:20161105-1ubuntu3 \
+    iputils-tracepath=3:20161105-1ubuntu3 \
+    jq=1.5+dfsg-2 \
+    linux-firmware=1.173.21 \
+    lm-sensors=1:3.4.0-4 \
+    modemmanager=1.10.0-1~ubuntu18.04.2 \
+    nano=2.9.3-2 \
+    network-manager=1.10.6-2ubuntu1.4 \
+    network-manager-pptp=1.2.6-1 \
+    nmap=7.60-1ubuntu5 \
+    nvme-cli=1.5-1ubuntu1.2 \
+    openssh-server=1:7.6p1-4ubuntu0.7 \
+    smartmontools=6.5+svn4324-1ubuntu0.1 \
+    sshfs=2.8-1 \
+    sshuttle=0.78.3-1ubuntu1.1 \
+    tcpdump=4.9.3-0ubuntu0.18.04.2 \
+    telnet=0.17-41 \
+    tree=1.7.0-5 \
+    usb-modeswitch=2.5.2+repack0-2ubuntu1 \
+    whois=5.3.0 \
+    zerofree=1.0.4-1
+
+# Install necessary items & helpful tools (core only)
+RUN if [ -z "$AGENT_MODE" ]; then \
+    apt-get update && apt-get install --no-install-recommends -y \
+    dnsmasq=2.79-1 \
+    nfs-kernel-server=1:1.3.4-2.1ubuntu5.5 ; \
+    fi
+
+## Install the Waggle Debian packages - start
+# Install Waggle python pip packages (dependency of waggle-common-tools >= 0.4.0)
+RUN pip3 install pywagglemsg==0.3.0.post1
+
+RUN mkdir -p /tmp/waggledebs
+WORKDIR /tmp/waggledebs
+
+# Common apps (core and agent)
+RUN wget https://github.com/waggle-sensor/waggle-common-tools/releases/download/v1.0.0/waggle-common-tools_1.0.0_all.deb ; \
+    wget https://github.com/waggle-sensor/waggle-nodeid/releases/download/v1.0.7/waggle-nodeid_1.0.7_all.deb
+
+# Core only apps
+RUN if [ -z "$AGENT_MODE" ]; then \
+    wget https://github.com/waggle-sensor/waggle-rpi-pxeboot/releases/download/v2.1.8/sage-rpi-pxeboot_2.1.8_all.deb ; \
+    wget https://github.com/waggle-sensor/waggle-wagman-watchdog/releases/download/v1.3.0/sage-wagman-watchdog_1.3.0_all.deb ; \
+    wget https://github.com/waggle-sensor/waggle-node-hostname/releases/download/v1.2.1/waggle-node-hostname_1.2.1_all.deb ; \
+    wget https://github.com/waggle-sensor/waggle-internet-share/releases/download/v1.4.1/waggle-internet-share_1.4.1_all.deb ; \
+    wget https://github.com/waggle-sensor/waggle-network-watchdog/releases/download/v2.3.1/waggle-network-watchdog_2.3.1_all.deb ; \
+    wget https://github.com/waggle-sensor/waggle-bk-registration/releases/download/v2.2.2/waggle-bk-registration_2.2.2_all.deb ; \
+    wget https://github.com/waggle-sensor/waggle-bk-reverse-tunnel/releases/download/v2.3.2/waggle-bk-reverse-tunnel_2.3.2_all.deb ; \
+    wget https://github.com/waggle-sensor/waggle-wan-tunnel/releases/download/v1.0.0/waggle-wan-tunnel_1.0.0_all.deb ; \
+    wget https://github.com/waggle-sensor/waggle-powercycle/releases/download/1.0.0/waggle-powercycle_1.0.0_all.deb ; \
+    wget https://github.com/waggle-sensor/waggle-firewall/releases/download/v1.1.3/waggle-firewall_1.1.3_all.deb ; \
+    fi
+
+RUN dpkg-scanpackages . /dev/null | gzip -9c > Packages.gz && \
+    echo "deb [trusted=yes] file:/tmp/waggledebs ./" > /etc/apt/sources.list.d/waggledebs.list
+
+# Common apps (core and agent)
+RUN apt-get update && apt-get install -y \
+    waggle-common-tools \
+    waggle-nodeid
+
+# Core only apps
+RUN if [ -z "$AGENT_MODE" ]; then \
+    apt-get update && apt-get install -y \
+    sage-rpi-pxeboot \
+    sage-wagman-watchdog \
+    waggle-node-hostname \
+    waggle-internet-share \
+    waggle-network-watchdog \
+    waggle-bk-registration \
+    waggle-bk-reverse-tunnel \
+    waggle-wan-tunnel \
+    waggle-powercycle \
+    waggle-firewall ; \
+    fi
+
+RUN rm -f /etc/apt/sources.list.d/waggledebs.list && \
+    rm -rf /tmp/waggledebs && \
+    apt-get update
+WORKDIR /
+## Install the Waggle Debian packages - end
+
+# disable ipv6
+RUN echo 'net.ipv6.conf.all.disable_ipv6 = 1' >> /etc/sysctl.conf
+
+# set Loose Reverse Path
+RUN echo 'net.ipv4.conf.default.rp_filter = 2' >> /etc/sysctl.conf && \
+    echo 'net.ipv4.conf.all.rp_filter = 2' >> /etc/sysctl.conf
+
+# disable all other MOTD
+RUN chmod -x /etc/update-motd.d/*
+RUN sed -i 's/^ENABLED=1/ENABLED=0/' /etc/default/motd-news
+RUN systemctl disable motd-news.service && \
+    systemctl disable motd-news.timer
+
+# disable the APT timers
+RUN systemctl disable apt-daily.service && \
+    systemctl disable apt-daily.timer
+RUN systemctl disable apt-daily-upgrade.service && \
+    systemctl disable apt-daily-upgrade.timer
+
+# add the `wheel` user for CORE only (before copy files over as root)
+RUN if [ -z "$AGENT_MODE" ]; then \
+    useradd -m waggle -s /bin/bash ; \
+    fi
+
+# copy over file system modifications
+COPY ROOTFS/ /
+RUN chmod 700 /root/.ssh ; \
+    chmod 600 /root/.ssh/* ; \
+    chmod 600 /home/waggle/.ssh/* ; \
+    chmod 644 /etc/ssh/ssh_known_hosts ; \
+    chmod 600 /etc/waggle/sage_registration ; \
+    chmod 600 /etc/waggle/sage_registration-cert.pub ; \
+    chmod 644 /etc/waggle/sage_registration.pub ; \
+    chmod 600 /etc/NetworkManager/system-connections/* ; \
+    chmod 644 /etc/waggle/docker/certs/domain.crt ; \
+    chmod 600 /etc/waggle/docker/certs/domain.key ; \
+    chmod 440 /etc/sudoers.d/waggle
+
+## Configure the docker local registry certification
+RUN mkdir -p /etc/docker/certs.d/10.31.81.1\:5000/ ; \
+    cp /etc/waggle/docker/certs/domain.crt /etc/docker/certs.d/10.31.81.1\:5000/ ; \
+    mkdir -p /usr/local/share/ca-certificates ; \
+    cp /etc/waggle/docker/certs/domain.crt /usr/local/share/ca-certificates/docker.crt ; \
+    update-ca-certificates
+
+## Remove agent only files from core
+RUN if [ -z "$AGENT_MODE" ]; then \
+    rm -rf /etc/rc.local-agent ; \
+    rm -rf /etc/hosts.allow-agent ; \
+    rm -rf /etc/hosts.deny-agent ; \
+    fi
+
+## Perform Agent only rootfs modifications
+RUN if [ -n "$AGENT_MODE" ]; then \
+    rm -rf /etc/sudoers.d/waggle ; \
+    rm -rf /home/waggle ; \
+    rm -rf /etc/waggle/sage_registration ; \
+    rm -rf /etc/waggle/sage_registration-cert.pub ; \
+    rm -rf /etc/waggle/sage_registration.pub ; \
+    mv /etc/rc.local-agent /etc/rc.local ; \
+    mv /etc/hosts.allow-agent /etc/hosts.allow ; \
+    mv /etc/hosts.deny-agent /etc/hosts.deny ; \
+    fi
+
+# enable the Waggle Power LED service to run
+RUN systemctl enable waggle-power-led
+
+# enable the Waggle k3s graceful shutdown service
+RUN systemctl enable waggle-k3s-shutdown
+
+# configure the Waggle config
+RUN if [ -z "$AGENT_MODE" ]; then \
+    ln -s /etc/waggle/config-dev.ini /etc/waggle/config.ini ; \
+    else \
+    ln -s /etc/waggle/config-agent.ini /etc/waggle/config.ini ; \
+    fi
+
+# configure authorized keys to use "factory/dev" mode
+RUN ln -s /root/.ssh/authorized_keys.dev /root/.ssh/authorized_keys
+
+# enable the root user to login
+RUN chpasswd -e < /root/credentials && \
+    rm /root/credentials
+
+# set proper permissions for `waggle` user
+RUN if [ -z "$AGENT_MODE" ]; then \
+    chown -R waggle:waggle /home/waggle ; \
+    fi
+
+# disable clear text passwords but enable SSH access for the root user
+RUN sed -i 's/^#\?PasswordAuthentication .*$/PasswordAuthentication no/' /etc/ssh/sshd_config && \
+    sed -i 's/^#\?PermitRootLogin .*$/PermitRootLogin without-password/' /etc/ssh/sshd_config
+
+# enable root login via serial console
+RUN echo "ttyTCU0" >> /etc/securetty
+
+RUN apt-get autoremove -y && \
+    apt-get autoclean && \
+    apt-get clean
+## must be last
+RUN rm /usr/bin/qemu-aarch64-static

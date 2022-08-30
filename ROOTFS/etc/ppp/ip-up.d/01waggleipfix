@@ -1,0 +1,17 @@
+#!/bin/bash
+#
+# Workaround to ensure ppp interface has an IFA_ADDRESS field
+#
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+
+logger -t "waggleipfix" "$1: start"
+
+METRIC=700
+logger -t "waggleipfix" "$1: re-create ip addr $4 with default route (metric: $METRIC)"
+
+ip addr del $4 dev $1
+ip addr add $4 broadcast $4 dev $1
+route add default gw $4 metric $METRIC
+
+logger -t "waggleipfix" "$1: end"

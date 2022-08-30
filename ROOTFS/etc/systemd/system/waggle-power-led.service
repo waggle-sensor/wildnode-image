@@ -1,0 +1,53 @@
+[Unit]
+Description=Waggle Power LED
+# Remove conflicting default dependencies on sysinit.target
+DefaultDependencies=no
+# Start in-between local-fs-pre and local-fs
+After=local-fs-pre.target
+Before=local-fs.target
+# Stop before shutdown.target
+Conflicts=shutdown.target
+Before=shutdown.target
+ConditionPathExists=/sys/class/leds/blue
+ConditionPathExists=/sys/class/leds/green
+ConditionPathExists=/sys/class/leds/red
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+TimeoutStartSec=5
+# Start: set the onboard LED
+ExecStart=/bin/sh -c " \
+  echo 0 > /sys/class/leds/blue/brightness; \
+  echo 0 > /sys/class/leds/green/brightness; \
+  echo 0 > /sys/class/leds/red/brightness; \
+  echo timer > /sys/class/leds/blue/trigger; \
+"
+ExecStart=-/bin/sh -c "echo 1500 > /sys/class/leds/blue/delay_off"
+
+# Start: set the Wagman LED1 (optional)
+ExecStart=-/bin/sh -c " \
+  echo 0 > /sys/class/leds/wm-blue1/brightness; \
+  echo 0 > /sys/class/leds/wm-green1/brightness; \
+  echo 0 > /sys/class/leds/wm-red1/brightness; \
+  echo timer > /sys/class/leds/wm-blue1/trigger; \
+  echo 1500 > /sys/class/leds/wm-blue1/delay_off; \
+"
+
+# Stop: set the onboard LED
+ExecStop=/bin/sh -c " \
+  echo 0 > /sys/class/leds/blue/brightness; \
+  echo 0 > /sys/class/leds/green/brightness; \
+  echo 255 > /sys/class/leds/red/brightness; \
+"
+
+# Stop: set the Wagman LED1 (optional)
+ExecStop=-/bin/sh -c " \
+  echo 0 > /sys/class/leds/wm-blue1/brightness; \
+  echo 0 > /sys/class/leds/wm-green1/brightness; \
+  echo 255 > /sys/class/leds/wm-red1/brightness; \
+"
+
+[Install]
+WantedBy=local-fs-pre.target
+WantedBy=local-fs.target

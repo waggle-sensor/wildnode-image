@@ -1,0 +1,24 @@
+[Unit]
+Description=Waggle Docker Registry (Mirror - Sage)
+Requires=docker.service
+After=docker.service
+
+[Service]
+Restart=always
+RestartSec=30s
+EnvironmentFile=/etc/waggle/docker_registry_config/waggle-registry-mirrors.env
+EnvironmentFile=-/etc/waggle/docker_registry_config/%N.env
+ExecStartPre=/etc/waggle/docker_registry_config/set_env_mirror.sh \
+    -p /etc/waggle/docker_registry_config/%N.env \
+    -d ${SAGE_DEFAULT_REMOTEURL} \
+    -a ${SAGE_FACTORY_REMOTEURL}
+ExecStart=/usr/bin/docker run --rm -p ${SAGE_LOCAL_PORT}:5000 --name mirror_registry_sage \
+    -v /media/plugin-data/docker_registry/mirrors/sage:/var/lib/registry \
+    -e REGISTRY_PROXY_REMOTEURL=${REGISTRY_PROXY_REMOTEURL} \
+    -e REGISTRY_STORAGE_DELETE_ENABLED=true \
+    registry:2
+ExecStop=/usr/bin/docker stop mirror_registry_sage
+ExecStopPost=-/usr/bin/docker container rm mirror_registry_sage
+
+[Install]
+WantedBy=default.target

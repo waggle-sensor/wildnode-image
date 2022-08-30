@@ -1,0 +1,6 @@
+INPUT -i wan0 -m conntrack ! --ctstate RELATED,ESTABLISHED -j DROP
+FORWARD -i wan0 -m conntrack ! --ctstate RELATED,ESTABLISHED -j DROP
+INPUT -i wifi0 -m conntrack ! --ctstate RELATED,ESTABLISHED -j DROP
+FORWARD -i wifi0 -m conntrack ! --ctstate RELATED,ESTABLISHED -j DROP
+INPUT -i modem0 -m conntrack ! --ctstate RELATED,ESTABLISHED -j DROP
+FORWARD -i modem0 -m conntrack ! --ctstate RELATED,ESTABLISHED -j DROP
