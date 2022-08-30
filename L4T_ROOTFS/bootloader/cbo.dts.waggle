@@ -1,0 +1,12 @@
+/*
+ * Customized Waggle boot options.
+ */
+
+/dts-v1/;
+
+/ {
+	compatible = "nvidia,cboot-options-v1";
+	boot-configuration {
+		boot-order = "emmc", "sd";
+	};
+};

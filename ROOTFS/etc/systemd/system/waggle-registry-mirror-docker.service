@@ -1,0 +1,24 @@
+[Unit]
+Description=Waggle Docker Registry (Mirror - docker.io)
+Requires=docker.service
+After=docker.service
+
+[Service]
+Restart=always
+RestartSec=30s
+EnvironmentFile=/etc/waggle/docker_registry_config/waggle-registry-mirrors.env
+EnvironmentFile=-/etc/waggle/docker_registry_config/%N.env
+ExecStartPre=/etc/waggle/docker_registry_config/set_env_mirror.sh \
+    -p /etc/waggle/docker_registry_config/%N.env \
+    -d ${DOCKER_DEFAULT_REMOTEURL} \
+    -a ${DOCKER_FACTORY_REMOTEURL}
+ExecStart=/usr/bin/docker run --rm -p ${DOCKER_LOCAL_PORT}:5000 --name mirror_registry_docker \
+    -v /media/plugin-data/docker_registry/mirrors/docker:/var/lib/registry \
+    -e REGISTRY_PROXY_REMOTEURL=${REGISTRY_PROXY_REMOTEURL} \
+    -e REGISTRY_STORAGE_DELETE_ENABLED=true \
+    registry:2
+ExecStop=/usr/bin/docker stop mirror_registry_docker
+ExecStopPost=-/usr/bin/docker container rm mirror_registry_docker
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,849 @@
+# Copyright (c) 2015-2020, NVIDIA CORPORATION.  All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#  * Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+#  * Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#  * Neither the name of NVIDIA CORPORATION nor the names of its
+#    contributors may be used to endorse or promote products derived
+#    from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ``AS IS'' AND ANY
+# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+# OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+xferout ()
+{
+	${sudocmd} scp $1 $2;
+	if [ $? -ne 0 ]; then
+		exit 1;
+	fi;
+}
+
+xferin ()
+{
+	${sudocmd} scp $1 /tmp/$2;
+	mv -f /tmp/$2 . ;
+	if [ $? -ne 0 ]; then
+		exit 1;
+	fi;
+}
+
+chksbin ()
+{
+	local var="$1";
+	if [ "${!var}" = "" ]; then
+		echo "Error: ${var} unspecified.";
+		exit 1;
+	fi;
+	if [ ! -f "${!var}" ]; then
+		echo "Error: ${!var} not found.";
+		exit 1;
+	fi;
+	local fn=$(basename "${!var}");
+	local ext="${fn##*.}";
+	fn="${fn%.*}";
+	if [ "${var}" = "bctfilename" ]; then
+		eval "s${var}=${fn}_signed.bct";
+	elif [ "${var}" = "localcfgfile" ]; then
+		eval "c${var}=${fn}_clean.${ext}";
+	else
+		eval "s${var}=${fn}_signed.${ext}";
+	fi;
+}
+
+validateMaster ()
+{
+	if [[ "$1" =~ ^[^@]{1,}@[^@]{1,}$ ]]; then
+		return 0
+	fi;
+	echo "Error: dbmaster is not in <user>@<db server> format.";
+	exit 1;
+}
+
+setsudocmd ()
+{
+	if [ "${SUDO_USER}" != "" ]; then
+		sudocmd="sudo -u ${SUDO_USER}";
+	fi;
+}
+
+clnremote ()
+{
+	if [ "${loc}" != "" ]; then
+		${sudocmd} ssh ${dbmaster} "rm -rf ${loc}";
+		:;
+	fi;
+}
+
+chksign ()
+{
+	local tot="$1";
+	local al;
+	while read al; do
+		if [[ "${al}" =~ ^SIGN:\ succeeded[^@]{1,}$ ]]; then
+			return 0;
+		fi;
+	done < <(echo -e "${tot}");
+	clnremote;
+	return 1;
+}
+
+sign_binaries_db ()
+{
+	if [ "${tegraid}" = "" ]; then
+		echo "*** Error: Tegra ID is missing.";
+		exit 1;
+	fi;
+	if [ "${fusetype}" = "" ]; then
+		echo "*** Error: Fuse type is missing.";
+		exit 1;
+	fi;
+	if [ "${fusetype}" != "NS" -a "${fusetype}" != "PKC" ]; then
+		echo "*** Error: unknown fuse type(${fusetype}).";
+		exit 1;
+	fi;
+
+	echo -n "*** Validating fuse configuration for ${sn} ... ";
+	pkcmd="bash -l -c 'mkpkc ${pkcopt} sign ${sn}'";
+	loc=`${sudocmd} ssh ${dbmaster} "${pkcmd}"`;
+	if [[ "${loc}" =~ ^Error:[^@]{1,}$ ]]; then
+		echo "${loc}";
+		exit 1;
+	fi;
+	pkcopt+="-d ${loc} ";
+
+	if [ "${fusetype}" == "NS" ]; then
+		echo "NS fuse validated.";
+		clnremote;
+		return 0;
+	fi;
+	echo "PKC fuse validated.";
+
+	# 3. Sign binaries.
+	echo -n "*** Signing binaries for ${sn} ... ";
+	xferout ${bctfilename}    ${dbmaster}:${loc};
+	xferout ${bootloadername} ${dbmaster}:${loc};
+	xferout ${localcfgfile}   ${dbmaster}:${loc};
+	blpkcopt="${pkcopt} -l ${bootloadername}";
+	pkcmd="bash -l -c 'mkpkc ${blpkcopt} sign ${sn}'";
+	signstat=`${sudocmd} ssh ${dbmaster} "${pkcmd}"`;
+	chksign "${signstat}";
+	if [ $? -ne 0 ]; then
+		exit 1;
+	fi;
+	xferin ${dbmaster}:${loc}/${sbctfilename} ${sbctfilename};
+	xferin ${dbmaster}:${loc}/${sbootloadername} ${sbootloadername};
+	xferin ${dbmaster}:${loc}/blob.bin blob.bin;
+
+	if [ "${flashername}" != "${bootloadername}" ]; then
+		xferout ${bctfilename} ${dbmaster}:${loc};
+		xferout ${flashername} ${dbmaster}:${loc};
+		cat ${localcfgfile} | \
+		  sed -e s/filename=${bootloadername}/filename=${flashername}/\
+		  > ${clocalcfgfile};
+		xferout ${clocalcfgfile} ${dbmaster}:${loc}/${localcfgfile};
+		flpkcopt="${pkcopt} -l ${flashername}";
+		pkcmd="bash -l -c 'mkpkc ${flpkcopt} sign ${sn}'";
+		signstat=`${sudocmd} ssh ${dbmaster} "${pkcmd}"`;
+		chksign "${signstat}";
+		if [ $? -ne 0 ]; then
+			exit 1;
+		fi;
+		xferin ${dbmaster}:${loc}/${sflashername} ${sflashername};
+		xferin ${dbmaster}:${loc}/blob.bin blob.bin;
+	fi;
+	clnremote;
+	echo "done.";
+
+	# 4. convert clean cfg to signed cfg:
+	echo -n "*** Generating signed configuration for ${sn} ... ";
+	mv -f ${localcfgfile} ${clocalcfgfile};
+	cat ${clocalcfgfile} | sed \
+		-e s/filename=${bctfilename}/filename=${sbctfilename}/\
+		-e s/filename=${bootloadername}/filename=${sbootloadername}/\
+	    > ${localcfgfile};
+	bctfilename=${sbctfilename};
+	flashername="${sflashername} --blob blob.bin";
+	echo "done.";
+}
+
+sign_binaries_direct ()
+{
+	# 1. Sign binaries.
+	echo -n "*** Signing binaries with ${keyfile} ... ";
+	blpkcopt="${pkcopt} -l ${bootloadername}";
+	pkcmd="mkpkc ${blpkcopt} sign";
+	signstat=`${pkcmd} 2>&1`;
+	rm -rf pub.sha;
+	chksign "${signstat}";
+	if [ $? -ne 0 ]; then
+		exit 1;
+	fi;
+
+	if [ "${flashername}" != "${bootloadername}" ]; then
+		rm -rf bltmpdir;
+		mkdir -p bltmpdir;
+		mv -f ${sbctfilename} bltmpdir;
+		mv -f ${sbootloadername} bltmpdir;
+		mv -f blob.bin bltmpdir;
+		cp -f ${localcfgfile} bltmpdir;
+		mv -f ${localcfgfile} ${clocalcfgfile};
+		cat ${clocalcfgfile} | \
+		  sed -e s/filename=${bootloadername}/filename=${flashername}/\
+		  > ${localcfgfile};
+		flpkcopt="${pkcopt} -l ${flashername}";
+		pkcmd="mkpkc ${flpkcopt} sign";
+		signstat=`${pkcmd} 2>&1`;
+		rm -rf pub.sha;
+		chksign "${signstat}";
+		if [ $? -ne 0 ]; then
+			exit 1;
+		fi;
+		rm -f ${sbctfilename};
+		cp -f bltmpdir/${sbctfilename} .;
+		cp -f bltmpdir/${sbootloadername} .;
+		cp -f ${localcfgfile} ${localcfgfile}.fl;
+		rm -rf bltmpdir;
+
+		mv -f ${clocalcfgfile} ${localcfgfile};
+	fi;
+	echo "done.";
+
+	# 2. convert clean cfg to signed cfg:
+	echo -n "*** Generating signed configuration ... ";
+	mv -f ${localcfgfile} ${clocalcfgfile};
+	cat ${clocalcfgfile} | sed \
+		-e s/filename=${bctfilename}/filename=${sbctfilename}/\
+		-e s/filename=${bootloadername}/filename=${sbootloadername}/\
+	    > ${localcfgfile};
+	bctfilename=${sbctfilename};
+	flashername="${sflashername} --blob blob.bin";
+	echo "done.";
+}
+
+## master => dbmaster
+## sn =>
+## tid => tegraid
+## ftype => fusetype
+## sku =>
+## bctname => bctfilename
+## cfgname => localcfgfile
+## blname => bootloadername
+## flname => flashername
+
+odmsigndb ()
+{
+	validateMaster "${dbmaster}";
+
+	if [ "${tegraid}" != "" ]; then
+		pkcopt+="-i ${tegraid} ";
+	fi;
+	if [ "${fusetype}" != "" ]; then
+		pkcopt+="-f ${fusetype} ";
+	fi;
+	if [ "${sku}" != "" ]; then
+		pkcopt+="-s ${sku} ";
+	fi;
+	if [ "${bctfilename}" != "" ]; then
+		pkcopt+="-b ${bctfilename} ";
+	fi;
+	if [ "${localcfgfile}" != "" ]; then
+		pkcopt+="-c ${localcfgfile} ";
+	fi;
+
+	setsudocmd;
+	chksbin bctfilename;
+	chksbin bootloadername;
+	chksbin localcfgfile;
+	if [ "${flashername}" = "" ]; then
+		flashername="${bootloadername}";
+	fi;
+	chksbin flashername;
+	sign_binaries_db;
+	return $?;
+}
+
+odmsigndirect ()
+{
+	export PATH="${LDK_DIR}/pkc:${PATH}";
+
+	if [ "${fusetype}" != "PKC" ]; then
+		return 0;
+	fi;
+	pkcopt+="-f ${fusetype} ";
+
+	if [ "${sn}" != "" ]; then
+		echo "Error: Invalid Serial Number input.";
+		exit 1;
+	fi;
+	pkcopt+="-k ${keyfile} ";
+
+	if [ "${tegraid}" = "" ]; then
+		echo "Error: missing <tegraid>";
+		exit 1;
+	fi;
+	pkcopt+="-i ${tegraid} ";
+
+	if [ "${bctfilename}" = "" ]; then
+		echo "Error: missing BCT filename";
+		exit 1;
+	fi;
+	pkcopt+="-b ${bctfilename} ";
+
+	if [ "${localcfgfile}" = "" ]; then
+		echo "Error: missing CFG filename";
+		exit 1;
+	fi;
+	pkcopt+="-c ${localcfgfile} ";
+
+	if [ "${sku}" != "" ]; then
+		pkcopt+="-s ${sku} ";
+	fi;
+
+	chksbin bctfilename;
+	chksbin bootloadername;
+	chksbin localcfgfile;
+	if [ "${flashername}" = "" ]; then
+		flashername="${bootloadername}";
+	fi;
+	chksbin flashername;
+	sign_binaries_direct;
+	return $?;
+}
+
+chext ()
+{
+	local var="$1";
+	local fname=`basename "$2"`;
+	local OIFS=${IFS};
+	IFS='.';
+	na=($fname);
+	IFS=${OIFS};
+	eval "${var}=${na[0]}.${3}";
+}
+
+extsig ()
+{
+	local var="$1";
+	local fname=`basename "$2"`;
+	local OIFS=${IFS};
+	IFS='.';
+	na=($fname);
+	IFS=${OIFS};
+	eval "${var}=${na[0]}${3}.${na[1]}.${4}";
+}
+
+sigbins ()
+{
+	local var="$1";
+	local OIFS=${IFS};
+	local str=`echo ${!var} | sed -e s/\;//g -e s/\"//g`;
+	IFS=' ';
+	local ba=($str);
+	IFS=${OIFS};
+	local i;
+	local NBIN;
+	local NEWBINS="";
+
+	if [ "${ba[0]}" != "--bins" ] && [ "${ba[0]}" != "--bin" ]; then
+		echo "Error: bad BINSARGS format: Q${ba[0]}Q";
+		exit 1;
+	fi;
+	local basize=${#ba[@]};
+	for (( i=1; i < ${basize}; )); do
+		if [[ ${ba[$((i+1))]} =~ "/" ]]; then
+			echo "Error: full path is not allowed in BINSARGS:";
+			echo "       ${ba[$((i+1))]}";
+			exit 1;
+		fi;
+		extsig NBIN ${ba[$((i+1))]} "${2}" "${3}";
+		NEWBINS+="${ba[$i]} ${NBIN}";
+		i=$((i+2));
+		if [ ${i} -lt ${basize} ]; then
+			NEWBINS+="; ";
+		fi;
+	done;
+	eval "${4}='${NEWBINS}'";
+}
+
+addconv ()
+{
+	local container="$1";
+	local var="$2";
+	local tmpvar;
+	if [ "${!var}" = "" ]; then
+		return;
+	fi;
+	extsig tmpvar "${!var}" "${3}" "${4}";
+	eval "${1}+=\"-e s/${!var}/${tmpvar}/ \"";
+}
+
+odmsign ()
+{
+	local securecfgfile="";
+	local flashcmdfile="flashcmd.txt"
+	rm -f ${flashcmdfile};
+
+	if [ "${dbmaster}" = "" ]; then
+		return 0;
+	fi;
+	if [ "${sn}" != "" ]; then
+		odmsigndb;
+		return $?;
+	fi;
+
+	if [[ ${dbmaster} =~ ^/ ]]; then
+		keyfile="${dbmaster}";
+	else
+		keyfile=`readlink -f "../${dbmaster}"`;
+	fi;
+	if [ ! -f "${keyfile}" ]; then
+		echo "Error: keyfile ${dbmaster} not found";
+		exit 1;
+	fi;
+	local lkf=`basename ${keyfile}`;
+	if [ -f "${lkf}" ]; then
+		echo "Error: KEY file found in bootloader directory";
+		echo -n "KEY file should be located in safe directroty "
+		echo "other than bootloader directory";
+		exit 1;
+	fi;
+
+	if [ "${flashappname}" = "tegraflash.py" ]; then
+		kf=`readlink -f ${keyfile}`;
+		if [ "${BINSARGS}" != "" -a ${no_flash} -eq 0 ]; then
+			FLASHARGS+="--key ${kf} ";
+			return 0;
+		fi;
+		if [ "${BCT}" = "" ]; then
+			BCT="--bct";
+		fi;
+		FBARGS="--cmd \"sign\" ";
+		SIGNARGS+="--bl ${flashername} ";
+		SIGNARGS+="${BCT} ${bctfilename} ";
+		SIGNARGS+="--odmdata ${odmdata} ";
+		SIGNARGS+="${DTBARGS}${MTSARGS}${SOSARGS}${NCTARGS}";
+		SIGNARGS+="${BCTARGS} ${BINARGS} ${SKIPUID} ";
+		SIGNARGS+="${FBARGS} ";
+		SIGNARGS+="--chip ${tegraid} ";
+		SIGNARGS+="--key ${kf} ";
+
+		if [ "${BINSARGS}" != "" ]; then
+			extsig tmpflashername ${mb2blfilename} \
+					"_sigheader" "signed";
+			FLASHERCONV="-e s/${tegrabootname}/${mb2blfilename}/ ";
+		else
+			tmpflashername="${flashername}.signed";
+			FLASHERCONV="-e s/${bootloadername}/${flashername}/ ";
+		fi;
+		if [ "${flashername}" != "${bootloadername}" ]; then
+			# Sign flasher if different from bootloader:
+			cat ${localcfgfile} | sed ${FLASHERCONV} > flasher.xml;
+			signcmd="./${flashappname} --cfg flasher.xml ";
+			signcmd+="${SIGNARGS}";
+			echo "${signcmd}";
+			eval "${signcmd}";
+			cp -f signed/${tmpflashername} .;
+			rm -rf signed;
+		fi;
+
+		# Sign binaries:
+		signcmd="./${flashappname} --cfg ${localcfgfile} ${SIGNARGS} ";
+		echo "${signcmd}";
+		eval "${signcmd}";
+		cp -f signed/* .;
+
+		if [ ${bup_blob} -eq 1 ]; then
+			# In BUP generation, continue to be handled by main
+			return 0;
+		fi
+
+		# Prepare flashing signed binaries:
+		if [ "${BINSARGS}" != "" ]; then
+			extsig flashername ${flashername} "_sigheader" "signed";
+			BCT="--bct";
+			bctfilename="br_bct_BR.bct";
+			extsig signedwb0bootname ${wb0bootname} \
+					"_wbheader" "signed";
+			securecfgfile="secureflash.xml";
+			cat ${localcfgfile}.tmp | \
+				sed -e s/${wb0bootname}/${signedwb0bootname}/ \
+				> ${securecfgfile};
+			localcfgfile="${securecfgfile}";
+			BCTARGS="--mb1_bct mb1_bct_MB1_sigheader.bct.signed ";
+			sigbins BINSARGS "_sigheader" "signed" SIGNEDBINSARGS;
+			BINSARGS="--bins \"${SIGNEDBINSARGS}\" ";
+			SKIPUID="";
+		else
+			flashername="${flashername}.signed";
+			chext bctfilename ${bctfilename} "bct";
+			if [ -f "${localcfgfile}.tmp" ]; then
+				SIGNEDCONV="";
+				addconv SIGNEDCONV tegrabootname  "" "signed";
+				addconv SIGNEDCONV tbcfilename    "" "signed";
+				addconv SIGNEDCONV bootloadername "" "signed";
+				addconv SIGNEDCONV wb0bootname    "" "signed";
+				addconv SIGNEDCONV tosfilename    "" "signed";
+				addconv SIGNEDCONV dtbfilename    "" "signed";
+				addconv SIGNEDCONV localbootfile  "" "signed";
+				securecfgfile="signedflash.xml";
+				cat ${localcfgfile}.tmp | \
+					sed ${SIGNEDCONV} > ${securecfgfile};
+				mv -f "${securecfgfile}" ${localcfgfile};
+			fi;
+			if [ "${tegraid}" = "0x21" ]; then
+				if [[ ! $DTBARGS =~ \.dtb\.signed ]]; then
+					DTBARGS=${DTBARGS//.dtb/.dtb.signed};
+				fi;
+			fi;
+		fi;
+		SOSARGS="--applet rcm_1_signed.rcm ";
+		FBARGS="--cmd \"secureflash;reboot\" ";
+		return 0;
+	fi;
+
+	cp -f ${keyfile} .;
+	keyfile=`basename ${keyfile}`;
+	odmsigndirect;
+	rm -f ${keyfile} *.raw;
+
+	if [ "${NOFLASH}" = "1" ]; then
+		rm -f odmfuse_pkc.*;
+		if [ "${boardid}" != "" ]; then
+        		FLASHARGS+="--boardid ${boardid} ";
+		fi;
+		FLASHARGS+="--bct ${bctfilename} --setbct ";
+		FLASHARGS+="--configfile ${localcfgfile} ";
+		FLASHARGS+="${MTSARGS} --create --bl ${flashername} ";
+		FLASHARGS+="--odmdata $odmdata --go";
+		flashcmd="./${flashappname} ${FLASHARGS}";
+		flashcmdfile="flashcmd.txt"
+		echo "saving flash command in ${flashcmdfile}"
+		# Appending $flashcmd to $flashcmdfile is not an accident.
+		# There could be flash PREOPS.
+		echo "${flashcmd}" >> "${flashcmdfile}"
+		exit 0;
+	fi;
+
+	return $?;
+}
+
+#
+# odmsign_ext_sign
+#
+# This function encrypts and signs bootloader images when both PKC and SBK
+# keys are present. However, when only PKC key is present. it will only do
+# image signing without encrypting.
+#
+odmsign_ext_sign ()
+{
+	local kernel_name;
+	local dtb_name;
+
+	# PKC+SBC is supported currently only on T186 and T194
+	if [ "${CHIPID}" != "0x18" ] && [ "${CHIPID}" != "0x19" ]; then
+		echo "Error: ${CHIPID} is not supported."
+		return 1;
+	fi;
+
+	# Generate sign command
+	FBARGS="--cmd \"sign\" ";
+	SIGNARGS="--bl ${flashername} ${BCT} ${bctfilename}";
+	if [ "${CHIPID}" = "0x19" ]; then
+		SIGNARGS+=",${bctfile1name} ";
+	fi
+	SIGNARGS+=" --odmdata ${odmdata} ";
+	SIGNARGS+="${DTBARGS}${MTSARGS}${SOSARGS}${NCTARGS}${FBARGS}${NV_ARGS} ";
+	SIGNARGS+="--cfg ${localcfgfile} ";
+
+	if [ "${CHIPMAJOR}" != "" ]; then
+		SIGNARGS+="--chip \"${tegraid} ${CHIPMAJOR}\" ";
+	else
+		SIGNARGS+="--chip ${tegraid} ";
+	fi;
+
+	SIGNARGS+="${BCTARGS} ";
+	SIGNARGS+="${BINSARGS} ";
+
+	if [ -n "${usb_instance}" ]; then
+		SIGNARGS+="--instance ${usb_instance} ";
+	fi;
+
+	# Clean signed directory in case there is any left from previous run
+	rm -rf signed;
+
+	# Sign binaries with PKC key
+	signcmd="./${flashappname} ${SIGNARGS} --key ${keyfile} ";
+	echo "${signcmd}";
+	eval "${signcmd}";
+
+	# Handle PKC only
+	if [ "${sbk_keyfile}" = "" ]; then
+		cp -f signed/* .;
+		return $?;
+	fi;
+
+	# Sign binaries with both PKC and SBK keys
+	signcmd+="--encrypt_key ${sbk_keyfile} ";
+	echo "${signcmd}";
+	eval "${signcmd}";
+
+	if [ "${CHIPID}" = "0x18" ]; then
+		cp -f encrypted_signed/* .;
+	fi;
+	if [ "${CHIPID}" = "0x19" ]; then
+		cp -f encrypted_signed_t19x/* .;
+	fi;
+
+	# Use only PKC signed kernel and kernel-dtb
+	extsig kernel_name ${localbootfile} "_sigheader" "signed";
+	extsig dtb_name ${dtbfilename} "_sigheader" "signed";
+	cp -f signed/${kernel_name} .;
+	cp -f signed/${dtb_name} .;
+
+	return 0;
+}
+
+odmsign_convert_part_image_type ()
+{
+	local part="${1}";
+	local from="${2}"
+	local to="${3}"
+	local part_layout_file="${4}";
+	local line;
+
+	line=`sed -n "/\"${part}\"/=" "${part_layout_file}"`
+	line=$(( line+7 ));
+	sed -i "${line}s/${from}/${to}/g" "${part_layout_file}"
+}
+
+#
+# odmsign_ext_flash
+#
+# This functin flashes device with pre-signed images. However, if
+# --no-flash option is present, this function will only save the
+# generated secure flash command into a file without proceeding
+# flashing. The saved secure flash command file can be used to flash
+# device with pre-signed images where no keys are required to be present.
+#
+# This function handles both SBK+PKC and PKC only signed images.
+#
+odmsign_ext_flash ()
+{
+	local tmp;
+
+	# Prepare flashing signed xml:
+	securecfgfile="secureflash.xml";
+	# pkc only and pkc+sbk use different tmp xml name
+	if [ "${sbk_keyfile}" = "" ]; then
+		tmp="signed/${localcfgfile}.tmp";
+	else
+		if [ "${CHIPID}" = "0x18" ]; then
+			tmp="encrypted_signed/${localcfgfile}.tmp";
+		fi;
+		if [ "${CHIPID}" = "0x19" ]; then
+			tmp="encrypted_signed_t19x/output.xml";
+		fi;
+	fi;
+	cp -f "${tmp}" "./${localcfgfile}.tmp"
+
+	# insert line '<?xml version="1.0"?>' at top
+	sed -e '1 i<?xml version="1.0"?>\n' "${localcfgfile}.tmp" \
+		> "${securecfgfile}";
+
+	#
+	# When SBK is enabled, all partition images should all be encrypted.
+	# However, due to images loaded in by cboot are supported only by pkc
+	# signed, those images from kernel/kernel-dtb partitions should have
+	# image type "signed" instead of "encrypt.signed"
+	#
+	# Convert image type from '.encrypt.signed' to '.signed'
+	if [ "${sbk_keyfile}" != "" ]; then
+		odmsign_convert_part_image_type "kernel" ".encrypt.signed" \
+			".signed" "${securecfgfile}"
+		odmsign_convert_part_image_type "kernel_b" ".encrypt.signed" \
+			".signed" "${securecfgfile}"
+		odmsign_convert_part_image_type "kernel-dtb" ".encrypt.signed" \
+			".signed" "${securecfgfile}"
+		odmsign_convert_part_image_type "kernel-dtb_b" ".encrypt.signed" \
+			".signed" "${securecfgfile}"
+	fi;
+
+	localcfgfile="${securecfgfile}";
+
+	# Prepare flashing signed binaries command
+	# pkc only and pkc+sbk use different filename extension
+	if [ "${sbk_keyfile}" = "" ]; then
+		tmp="signed";
+	else
+		tmp="encrypt.signed";
+	fi;
+
+	extsig flashername ${flashername} "_sigheader" "${tmp}";
+	BCT="--bct";
+	bctfilename="br_bct_BR.bct";
+
+	# remove kernel and kernel-dtb from --bins
+	BINSARGS=`echo "${BINSARGS}" | sed "s|kernel boot.img; ||"`
+	BINSARGS=`echo "${BINSARGS}" | sed "s|kernel_dtb ${DTB_FILE}; ||"`
+	# convert ext to signed
+	sigbins BINSARGS "_sigheader" "${tmp}" SIGNEDBINSARGS;
+
+	if [ "${CHIPID}" = "0x18" ]; then
+		BCTARGS="--mb1_bct mb1_cold_boot_bct_MB1_sigheader.bct.${tmp} ";
+		SOSARGS="--applet rcm_1_signed.rcm ";
+	fi;
+	if [ "${CHIPID}" = "0x19" ]; then
+		# handle differently with and without SBK key
+		if [ "${sbk_keyfile}" != "" ]; then
+			flashername=`echo "${flashername}" | \
+				sed "s|_sigheader.bin|.bin_sigheader|"`
+			SIGNEDBINSARGS=`echo "${SIGNEDBINSARGS}" | \
+				sed "s|_recovery_t194_sigheader.bin|_recovery_t194.bin_sigheader|"`
+			BCTARGS="--mb1_bct mb1_bct_MB1.bct_sigheader.encrypt.signed ";
+			BCTARGS+="--mem_bct mem_rcm.bct_sigheader.encrypt.signed ";
+			BCTARGS+="--mb1_cold_boot_bct mb1_cold_boot_bct_MB1.bct_sigheader.encrypt.signed ";
+		else
+			BCTARGS="--mb1_bct mb1_bct_MB1_sigheader.bct.signed ";
+			BCTARGS+="--mem_bct mem_rcm_sigheader.bct.signed ";
+			BCTARGS+="--mb1_cold_boot_bct mb1_cold_boot_bct_MB1_sigheader.bct.signed ";
+		fi;
+		BCTARGS+="--mem_bct_cold_boot mem_coldboot_sigheader.bct.signed ";
+		SOSARGS="--applet rcm_2_signed.rcm --applet_softfuse rcm_1_signed.rcm ";
+	fi;
+
+	BINSARGS="--bins \"${SIGNEDBINSARGS}\" ";
+	SKIPUID="--skipuid ";
+
+	FBARGS="--cmd \"secureflash;reboot\" ";
+	FLASHARGS="--bl ${flashername} ${BCT} ${bctfilename}";
+	FLASHARGS+=" ${DTBARGS}${MTSARGS}${SOSARGS}${NCTARGS}${FBARGS} ";
+
+	FLASHARGS+="--cfg ${localcfgfile} ";
+
+	if [ "${CHIPMAJOR}" != "" ]; then
+		FLASHARGS+="--chip \"${tegraid} ${CHIPMAJOR}\" ";
+	else
+		FLASHARGS+="--chip ${tegraid} ";
+	fi;
+
+	FLASHARGS+="${BCTARGS} ";
+	FLASHARGS+="${BINSARGS} ";
+	FLASHARGS+="${SKIPUID} ";
+
+	if [ -n "${usb_instance}" ]; then
+		FLASHARGS+="--instance ${usb_instance} ";
+	fi;
+
+	flashcmd="./${flashappname} ${FLASHARGS}";
+	flashcmdfile="flashcmd.txt"
+	echo "${flashcmd}";
+	echo "saving flash command in ${flashcmdfile}"
+	echo "${flashcmd}" > "${flashcmdfile}"
+	sed -i 's/--skipuid//g' "${flashcmdfile}"
+
+	if [ ${no_flash} -ne 0 ]; then
+		echo ""
+		echo "*** no-flash flag enabled. Exiting now... *** ";
+		echo ""
+		echo "User can run above saved command in factory environment without ";
+		echo "providing pkc and sbk keys to flash a device";
+		echo ""
+		echo "Example:";
+		echo ""
+		echo "    $ cd bootloader ";
+		echo "    $ sudo bash ./flashcmd.txt";
+		echo ""
+		exit 0;
+	fi;
+
+	echo "*** Flashing target device started. ***"
+	eval "${flashcmd}";
+
+	return $?;
+}
+
+odmsign_ext_sign_and_flash ()
+{
+	odmsign_ext_sign;
+	if [ ${bup_blob} -eq 1 ]; then
+		# In BUP generation, it doesn't need flash device
+		# Continue to be handled by main
+		return 0;
+	fi
+	odmsign_ext_flash;
+	return $?;
+}
+
+odmsign_sanity_check_keyfile()
+{
+	local lkf=`basename ${1}`;
+	if [ -f "${lkf}" ]; then
+		echo "Error: KEY file ${lkf} found in bootloader directory.";
+		echo -n "KEY file ${lkf} should be located in safe directory "
+		echo "other than bootloader.";
+		exit 1;
+	fi;
+}
+
+odmsign_ext ()
+{
+	if [ "${CHIPID}" = "0x21" ]; then
+		# Use odmsign to handle T210
+		odmsign;
+		return $?;
+	fi;
+
+	if [ ${no_flash} -eq 0 ]; then
+		# sign and flash
+		if [ "${sbk_keyfile}" = "" ]; then
+			# zero key or only pkc, handled by main
+			return 0;
+		fi;
+		# sign and flash with both pkc and sbk keys
+		odmsign_ext_sign_and_flash;
+		exit 0;
+	else
+		# sign only
+		if [ "${keyfile}" = "" ]; then
+			# zero key, handled by main by only generating flashcmd.txt
+			return 0;
+		fi;
+
+		odmsign_sanity_check_keyfile "${keyfile}";
+		if [ "${sbk_keyfile}" = "" ]; then
+			# pkc only
+			# Use odmsign_ext to handle T186 and T194
+			odmsign_ext_sign_and_flash;
+			if [ ${bup_blob} -eq 1 ]; then
+				# In BUP generation, continue to be handled by main
+				return 0;
+			fi
+			exit 0;
+		fi;
+
+		# both pkc and sbk keys
+		odmsign_sanity_check_keyfile "${sbk_keyfile}";
+		odmsign_ext_sign_and_flash;
+		if [ ${bup_blob} -eq 1 ]; then
+			return 0;
+		fi
+		exit 0;
+	fi;
+
+	echo "Error: should not reach here"
+	exit 1
+}

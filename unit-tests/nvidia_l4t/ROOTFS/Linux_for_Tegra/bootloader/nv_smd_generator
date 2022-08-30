@@ -1,0 +1,10 @@
+#!/bin/bash -ex
+
+# Fake NVidia "SMD generator" program
+#  Simulates creating the binary SMD partition .bin file
+
+INFILE=$1
+OUTFILE=$2
+
+echo "nv_smd_generator: creating fake [$2] from input [$1]"
+echo "CUSTOM SMD BIN FILE" > $2

@@ -1,0 +1,75 @@
+on:
+  push:
+    # Sequence of patterns matched against refs/tags
+    tags:
+      - "v*" # Push events to matching v*, i.e. v1.0, v20.15.10
+
+name: Create Release
+
+jobs:
+  build:
+    name: Create Release
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          path: release
+      ## Build the Photon release
+      - name: Build Photon Release
+        id: build_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_ACCESS_TOKEN }}
+        run: |
+          pushd ${{ github.workspace }}/release
+          ./release.sh -a -p -r release_manifest -c ${{ github.workspace }}
+          popd
+      - name: Create Release
+        # Split the assets into 2GB max size (GitHub limit) and upload to new release
+        id: create_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_ACCESS_TOKEN }}
+        run: |
+          set -x
+
+          md5sum release/*.tbz2 > release/checksums.md5
+
+          # split the assets into max size 2GiB
+          for asset in release/*.tbz2; do
+            split --bytes=2GB $asset --suffix-length=1 --numeric-suffixes "${asset}-" --verbose
+          done
+
+          # create the array of assets to upload into the release
+          assets=()
+          for asset in release/*.tbz2-*; do
+            assets+=("$asset")
+          done
+
+          # create the release message
+          tag_name="${GITHUB_REF##*/}"
+          pushd ${{ github.workspace }}/release
+          photon_core=()
+          photon_agent=()
+          for asset in *.tbz2-*; do
+            if [[ $asset == photon-core* ]]; then
+              photon_core+=("$asset")
+            else
+              photon_agent+=("$asset")
+            fi
+          done
+          export commit_msg="$(git log --format=%B -n 1 $tag_name)"
+          export core_files=$(printf "%s\n" "${photon_core[@]}")
+          export agent_files=$(printf "%s\n" "${photon_agent[@]}")
+          envsubst '${commit_msg} ${core_files} ${agent_files}' <release_notes.md > rel_notes
+          popd
+
+          # create the release and upload assets
+          #hub release create "${assets[@]}" -m "${body}" "${tag_name}"
+          gh release create "${tag_name}" --title="Release $tag_name" --notes-file=release/rel_notes
+          for asset in "${assets[@]}"; do
+            gh release upload "${tag_name}" "${asset}"
+          done
+
+          gh release upload "${tag_name}" "release/checksums.md5"
+
+          echo "Release [${tag_name}] creation complete"

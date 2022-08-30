@@ -1,0 +1,33 @@
+[plugins.opt]
+  path = "/var/lib/rancher/k3s/agent/containerd"
+
+
+[plugins.cri]
+  stream_server_address = "127.0.0.1"
+  stream_server_port = "10010"
+  enable_selinux = false
+  sandbox_image = "rancher/pause:3.1"
+
+
+[plugins.cri.containerd]
+  disable_snapshot_annotations = true
+  snapshotter = "overlayfs"
+
+
+[plugins.cri.cni]
+  bin_dir = "{{ .NodeConfig.AgentConfig.CNIBinDir }}"
+  conf_dir = "{{ .NodeConfig.AgentConfig.CNIConfDir }}"
+
+
+[plugins.cri.containerd.runtimes.runc]
+  runtime_type = "io.containerd.runc.v2"
+
+
+[plugins.cri.containerd.runtimes.runc.options]
+  BinaryName = "nvidia-container-runtime"
+
+[plugins.cri.registry.mirrors]
+  [plugins.cri.registry.mirrors."docker.io"]
+    endpoint = ["http://10.31.81.1:5001"]
+  [plugins.cri.registry.mirrors."registry.sagecontinuum.org"]
+    endpoint = ["http://10.31.81.1:5002"]

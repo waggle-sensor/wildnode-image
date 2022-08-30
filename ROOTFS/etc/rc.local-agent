@@ -1,0 +1,40 @@
+#!/bin/bash -e
+
+## The NX agent "first boot" script
+# - configure tmpfs overlay
+# - setup nvme for k3s / docker
+
+SYSLOGTAG="ws-nxagent-rc.local"
+
+echo "Start" | logger -t ${SYSLOGTAG}
+
+# create ramdisk (overlayroot support)
+echo "create initrd" | logger -t ${SYSLOGTAG}
+/etc/waggle/factory/create_initrd.sh -c /etc/waggle/factory/factory_provision_agent.conf
+
+# create the backup sd card
+echo "prepare sdcard" | logger -t ${SYSLOGTAG}
+/etc/waggle/factory/sdcard_prep.sh -c /etc/waggle/factory/factory_provision_agent.conf
+
+# create the nvme and symlinks
+echo "prepare nvme" | logger -t ${SYSLOGTAG}
+/etc/waggle/factory/nvme_overlay.sh -c /etc/waggle/factory/factory_provision_agent.conf
+
+# set journald for tmpfs
+echo "move journal logs to nvme" | logger -t ${SYSLOGTAG}
+mkdir -p /media/plugin-data
+mount /dev/nvme0n1p3 /media/plugin-data
+mkdir -p /media/plugin-data/var/log/
+echo "disable journald" | logger -t ${SYSLOGTAG}
+service systemd-journald stop
+sync
+mv /var/log/journal /media/plugin-data/var/log/
+ln -s /media/plugin-data/var/log/journal /var/log/journal
+service systemd-journald start || true
+
+# move script to ensure not run on future boots
+echo "disable future runs of 'first boot' script and reboot" | logger -t ${SYSLOGTAG}
+mv /etc/rc.local /etc/rc.local.$(date '+%Y%m%d-%H%M%S').done
+shutdown -r +1
+
+echo "Complete" | logger -t ${SYSLOGTAG}

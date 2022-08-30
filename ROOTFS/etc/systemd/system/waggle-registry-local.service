@@ -1,0 +1,19 @@
+[Unit]
+Description=Waggle Docker Registry (Local)
+Requires=docker.service
+After=docker.service
+
+[Service]
+Restart=always
+RestartSec=30s
+ExecStart=/usr/bin/docker run --rm -p 5000:5000 --name local_registry \
+    -v /media/plugin-data/docker_registry/local:/var/lib/registry \
+    -v /etc/waggle/docker/certs:/certs \
+    -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/domain.crt \
+    -e REGISTRY_HTTP_TLS_KEY=/certs/domain.key \
+    registry:2
+ExecStop=/usr/bin/docker stop local_registry
+ExecStopPost=-/usr/bin/docker container rm local_registry
+
+[Install]
+WantedBy=default.target

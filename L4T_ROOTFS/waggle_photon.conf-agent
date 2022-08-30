@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# Waggle Photon (Agent) NX board config definition for Nvidia flashing tools.
+## Identical to Photon (Core) NX board config except for a differnet EMMC_CFG
+
+source "${LDK_DIR}/p3668.conf.common";
+DTB_FILE=tegra194-xavier-nx-cti-NGX003-WAGGLE-WS.dtb;
+EMMC_CFG=flash_waggle_l4t_t194_spi_emmc_p3668_agent.xml;
+EMMCSIZE=17179869184;
+ROOTFSSIZE=10GiB;
+
+# WORK-AROUND: bring-in CTI specific changes from p3668.cti-base.common (compared to p3668.conf.common)
+#  The p3668.cti-base.common copies p3668.conf.common instead of sourcing p3668.conf.common
+#  and therefore contains old references to non-existant files (i.e. PMC_CONFIG).
+#  So, we want to use the NVidia common file and bring in only CTI specific changes here.
+PINMUX_CONFIG="tegra19x-xavier-nx-cti-mb1-pinmux-p3668-a01.cfg";
