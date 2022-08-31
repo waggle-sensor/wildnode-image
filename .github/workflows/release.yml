@@ -13,10 +13,17 @@ jobs:
     name: Create Release
     runs-on: self-hosted
     steps:
-      - name: Checkout code
+      - name: Checkout repo
         uses: actions/checkout@v2
         with:
           path: release
+
+      - name: Set up QEMU for multi-arch builds
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker buildx for multi-arch builds
+        uses: docker/setup-buildx-action@v2
+
       ## Build the Photon release
       - name: Build Photon Release
         id: build_release
@@ -24,6 +31,7 @@ jobs:
           pushd ${{ github.workspace }}/release
           ./release.sh -a -p -r release_manifest -c ${{ github.workspace }}
           popd
+
       - name: Create Release
         # Split the assets into 2GB max size (GitHub limit) and upload to new release
         id: create_release
