@@ -1,3 +1,5 @@
+TEST CI
+
 # Wild Waggle Node Image Build
 
 Creates artifact(s) containing images for all bootloader, kernel and file system partitions including all necessary tools to flash the NVidia NX hardware of a [Wild Waggle Node](https://github.com/waggle-sensor/wild-waggle-node).
