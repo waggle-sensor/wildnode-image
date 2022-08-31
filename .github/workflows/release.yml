@@ -1,8 +1,5 @@
 on:
   workflow_call:
-    secrets:
-    RELEASE_ACCESS_TOKEN:
-      required: true
   push:
     # Sequence of patterns matched against refs/tags
     tags:
@@ -22,8 +19,6 @@ jobs:
       ## Build the Photon release
       - name: Build Photon Release
         id: build_release
-        env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_ACCESS_TOKEN }}
         run: |
           pushd ${{ github.workspace }}/release
           ./release.sh -a -p -r release_manifest -c ${{ github.workspace }}
@@ -31,8 +26,6 @@ jobs:
       - name: Create Release
         # Split the assets into 2GB max size (GitHub limit) and upload to new release
         id: create_release
-        env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_ACCESS_TOKEN }}
         run: |
           set -x
 
