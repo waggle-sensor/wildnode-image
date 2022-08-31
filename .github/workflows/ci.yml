@@ -2,8 +2,9 @@ name: CI
 
 on:
   workflow_call:
-  pull_request:
-    branches: [main]
+  ## Disable CI in this public repo until after a self-hosted runner can be setup safely
+  # pull_request:
+  #   branches: [main]
 
 jobs:
   build_fake_builds:
