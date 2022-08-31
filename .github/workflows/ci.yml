@@ -2,14 +2,14 @@ name: CI
 
 on:
   workflow_call:
-  ## Disable CI in this public repo until after a self-hosted runner can be setup safely
-  # pull_request:
-  #   branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
   build_fake_builds:
     name: Build Fake L4T Images
-    runs-on: self-hosted
+    # runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
