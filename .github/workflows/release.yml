@@ -1,4 +1,8 @@
 on:
+  workflow_call:
+    secrets:
+    RELEASE_ACCESS_TOKEN:
+      required: true
   push:
     # Sequence of patterns matched against refs/tags
     tags:
