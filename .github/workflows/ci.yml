@@ -2,6 +2,15 @@ name: CI
 
 on:
   workflow_call:
+    inputs:
+      workdir:
+        required: false
+        type: string
+        default: "."
+      extrasteps:
+        required: false
+        type: string
+        default: ""
   ## Disable CI in this public repo until after a self-hosted runner can be setup safely
   # pull_request:
   #   branches: [main]
@@ -16,6 +25,10 @@ jobs:
         with:
           fetch-depth: 0 # checkout all git history
 
+      - name: Run Optional Extra Steps
+        if: ${{ inputs.extrasteps != null }}
+        run: ${{ inputs.extrasteps }} ${{ inputs.workdir }}
+
       - name: Set up QEMU for multi-arch builds
         uses: docker/setup-qemu-action@v2
 
@@ -29,4 +42,5 @@ jobs:
           pbzip2
 
       - name: Run unit-test
+        working-directory: ${{ inputs.workdir || '.' }}
         run: ./unit-tests/unit-test.sh

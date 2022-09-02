@@ -1,5 +1,14 @@
 on:
   workflow_call:
+    inputs:
+      workdir:
+        required: false
+        type: string
+        default: "."
+      extrasteps:
+        required: false
+        type: string
+        default: ""
   ## Disable release in this public repo until after a self-hosted runner can be setup safely
   # push:
   #   # Sequence of patterns matched against refs/tags
@@ -7,6 +16,9 @@ on:
   #     - "v*" # Push events to matching v*, i.e. v1.0, v20.15.10
 
 name: Create Release
+
+env:
+  release_workdir: "release/${{ inputs.workdir || '.' }}"
 
 jobs:
   build:
@@ -18,6 +30,10 @@ jobs:
         with:
           path: release
 
+      - name: Run Optional Extra Steps
+        if: ${{ inputs.extrasteps != null }}
+        run: ${{ inputs.extrasteps }} $release_workdir
+
       - name: Set up QEMU for multi-arch builds
         uses: docker/setup-qemu-action@v2
 
@@ -28,7 +44,7 @@ jobs:
       - name: Build Photon Release
         id: build_release
         run: |
-          pushd ${{ github.workspace }}/release
+          pushd ${{ github.workspace }}/$release_workdir
           ./release.sh -a -p -r release_manifest -c ${{ github.workspace }}
           popd
 
@@ -38,22 +54,22 @@ jobs:
         run: |
           set -x
 
-          md5sum release/*.tbz2 > release/checksums.md5
+          md5sum $release_workdir/*.tbz2 > $release_workdir/checksums.md5
 
           # split the assets into max size 2GiB
-          for asset in release/*.tbz2; do
+          for asset in $release_workdir/*.tbz2; do
             split --bytes=2GB $asset --suffix-length=1 --numeric-suffixes "${asset}-" --verbose
           done
 
           # create the array of assets to upload into the release
           assets=()
-          for asset in release/*.tbz2-*; do
+          for asset in $release_workdir/*.tbz2-*; do
             assets+=("$asset")
           done
 
           # create the release message
           tag_name="${GITHUB_REF##*/}"
-          pushd ${{ github.workspace }}/release
+          pushd ${{ github.workspace }}/$release_workdir
           photon_core=()
           photon_agent=()
           for asset in *.tbz2-*; do
@@ -71,11 +87,11 @@ jobs:
 
           # create the release and upload assets
           #hub release create "${assets[@]}" -m "${body}" "${tag_name}"
-          gh release create "${tag_name}" --title="Release $tag_name" --notes-file=release/rel_notes
+          gh release create "${tag_name}" --title="Release $tag_name" --notes-file=$release_workdir/rel_notes
           for asset in "${assets[@]}"; do
             gh release upload "${tag_name}" "${asset}"
           done
 
-          gh release upload "${tag_name}" "release/checksums.md5"
+          gh release upload "${tag_name}" "$release_workdir/checksums.md5"
 
           echo "Release [${tag_name}] creation complete"
