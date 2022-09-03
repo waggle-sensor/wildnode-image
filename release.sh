@@ -8,9 +8,6 @@ Download all assets outlined in the <release manifest> and create 2 builds:
 - Photon production (core)
 - Photon production (agent)
 
-Note: must have already logged into GitHub via `gh auth login` or the token
-set in the environment.
-
   -r : path to the release manifest file
   -c : cache directory to store downloaded artifacts
   -p : (optional) create the Photon (core) release
@@ -104,31 +101,25 @@ fi
 NVIDIA_BASE=$ARG_CACHE/$(basename $R_TEGRA_L4T_BASE)
 
 echo "Download CTI Tegra L4T BSP (${R_CTI_TEGRA_L4T} [${R_CTI_TEGRA_L4T_MD5}])"
-GH_REPO=$(echo $R_CTI_TEGRA_L4T | cut -d":" -f1)
-GH_TAG=$(echo $R_CTI_TEGRA_L4T | cut -d":" -f2)
-GH_FILE=$(echo $R_CTI_TEGRA_L4T | cut -d":" -f3)
-if ! file_already_exist $(basename $GH_FILE) ${R_CTI_TEGRA_L4T_MD5}; then
+if ! file_already_exist $(basename $R_CTI_TEGRA_L4T) ${R_CTI_TEGRA_L4T_MD5}; then
     # remove in the event file exists but has mismatched checksum
-    rm -rf $(basename $GH_FILE)
-    gh release download ${GH_TAG} --repo ${GH_REPO} -p ${GH_FILE}
-    validate_checksum $(basename $GH_FILE) ${R_CTI_TEGRA_L4T_MD5}
+    rm -rf $(basename $R_CTI_TEGRA_L4T)
+    wget -c ${R_CTI_TEGRA_L4T}
+    validate_checksum $(basename $R_CTI_TEGRA_L4T) ${R_CTI_TEGRA_L4T_MD5}
 fi
-CTI_BSP=$ARG_CACHE/$(basename $GH_FILE)
+CTI_BSP=$ARG_CACHE/$(basename $R_CTI_TEGRA_L4T)
 
 echo "Download CTI Tegra L4T BSP (${R_CBOOT} [${R_CBOOT_MD5}])"
-GH_REPO=$(echo $R_CBOOT | cut -d":" -f1)
-GH_TAG=$(echo $R_CBOOT | cut -d":" -f2)
-GH_FILE=$(echo $R_CBOOT | cut -d":" -f3)
-if ! file_already_exist $(basename $GH_FILE) ${R_CTI_TEGRA_L4T_MD5}; then
+if ! file_already_exist $(basename $R_CBOOT) ${R_CBOOT_MD5}; then
     # remove in the event file exists but has mismatched checksum
-    rm -rf $(basename $GH_FILE)
-    gh release download ${GH_TAG} --repo ${GH_REPO} -p ${GH_FILE}
-    validate_checksum $(basename $GH_FILE) ${R_CBOOT_MD5}
+    rm -rf $(basename $R_CBOOT)
+    wget -c ${R_CBOOT}
+    validate_checksum $(basename $R_CBOOT) ${R_CBOOT_MD5}
     # remove unzipped file if already exists
-    rm -rf $ARG_CACHE/$(basename $GH_FILE .gz)
-    gunzip $ARG_CACHE/$(basename $GH_FILE)
+    rm -rf $ARG_CACHE/$(basename $R_CBOOT .gz)
+    gunzip $ARG_CACHE/$(basename $R_CBOOT)
 fi
-CBOOT=$ARG_CACHE/$(basename $GH_FILE .gz)
+CBOOT=$ARG_CACHE/$(basename $R_CBOOT .gz)
 
 popd # cache folder
 

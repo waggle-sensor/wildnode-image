@@ -2,9 +2,9 @@ R_TEGRA_L4T_BASE=https://developer.nvidia.com/embedded/L4T/r32_Release_v4.4/r32_
 R_TEGRA_L4T_BASE_MD5=0d6f393d2deea52a6f7bf05183f6850a
 
 # github download of Waggle specific BSP
-R_CTI_TEGRA_L4T=waggle-sensor/wildnode-kernel-releases:v32.4.4.7:CTI-L4T-XAVIER-NX-32.4.4-V005-SAGE-32.4.4.7-0-g205b5bb6d.tgz
+R_CTI_TEGRA_L4T=https://github.com/waggle-sensor/wildnode-kernel-releases/releases/download/v32.4.4.7/CTI-L4T-XAVIER-NX-32.4.4-V005-SAGE-32.4.4.7-0-g205b5bb6d.tgz
 R_CTI_TEGRA_L4T_MD5=20070c7fe76abb4773155e218cc91bf4
 
 # github download of Waggle specific CBoot
-R_CBOOT=waggle-sensor/wildnode-cboot:v32.4.4.2:cboot_t194_32.4.4.2-0-gae155aa.bin.gz
+R_CBOOT=https://github.com/waggle-sensor/wildnode-cboot/releases/download/v32.4.4.2/cboot_t194_32.4.4.2-0-gae155aa.bin.gz
 R_CBOOT_MD5=c543062747736712dc240f6c9318087f
