@@ -51,6 +51,8 @@ jobs:
       - name: Create Release
         # Split the assets into 2GB max size (GitHub limit) and upload to new release
         id: create_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -x
 
