@@ -19,6 +19,7 @@ name: Create Release
 
 env:
   release_workdir: "release/${{ inputs.workdir || '.' }}"
+  release_dir: "release"
 
 jobs:
   build:
@@ -71,6 +72,10 @@ jobs:
 
           # create the release message
           tag_name="${GITHUB_REF##*/}"
+          pushd ${{ github.workspace }}/$release_dir
+          export commit_msg="$(git log --format=%B -n 1 $tag_name)"
+          popd
+
           pushd ${{ github.workspace }}/$release_workdir
           photon_core=()
           photon_agent=()
@@ -81,7 +86,6 @@ jobs:
               photon_agent+=("$asset")
             fi
           done
-          export commit_msg="$(git log --format=%B -n 1 $tag_name)"
           export core_files=$(printf "%s\n" "${photon_core[@]}")
           export agent_files=$(printf "%s\n" "${photon_agent[@]}")
           envsubst '${commit_msg} ${core_files} ${agent_files}' <release_notes.md > rel_notes
