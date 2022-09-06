@@ -3,17 +3,16 @@ name: CI
 on:
   workflow_call:
     inputs:
-      workdir:
-        required: false
-        type: string
-        default: "."
-      extrasteps:
+      overlay_cache_key:
         required: false
         type: string
         default: ""
   ## Disable CI in this public repo until after a self-hosted runner can be setup safely
   # pull_request:
   #   branches: [main]
+
+env:
+  workdir: _workdir
 
 jobs:
   build_fake_builds:
@@ -24,10 +23,6 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0 # checkout all git history
-
-      - name: Run Optional Extra Steps
-        if: ${{ inputs.extrasteps != null }}
-        run: ${{ inputs.extrasteps }} ${{ inputs.workdir }}
 
       - name: Set up QEMU for multi-arch builds
         uses: docker/setup-qemu-action@v2
@@ -41,6 +36,33 @@ jobs:
           sudo apt-get update && sudo apt-get install -y \
           pbzip2
 
+      # Steps for processing a worflow caller (i.e. overlayed software)
+      - name: Download Overlay Cache
+        id: download_overlay_cache
+        if: inputs.overlay_cache_key != null
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.workdir }}
+          key: ${{ inputs.overlay_cache_key }}
+
+      - name: Set the Cache Working Directory
+        id: cache_dir
+        run: |
+          if [ ${{ steps.download_overlay_cache.outcome }} == 'skipped' ]; then
+            echo "Cache step skipped, use current repo as working directory"
+            echo ::set-output name=workdir::.
+          else
+            if [ ${{ steps.download_overlay_cache.outputs.cache-hit }} == 'true' ]; then
+              echo "Overlay cache found, use cache [$workdir] as working directory"
+              echo ::set-output name=workdir::$workdir
+            else
+              echo "Overlay cache expected but not found. Exit"
+              exit 1
+            fi
+          fi
+
+      # Run the unit test on the working directory
       - name: Run unit-test
-        working-directory: ${{ inputs.workdir || '.' }}
-        run: ./unit-tests/unit-test.sh
+        working-directory: ${{ steps.cache_dir.outputs.workdir }}
+        run: |
+          ./unit-tests/unit-test.sh

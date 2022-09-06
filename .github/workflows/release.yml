@@ -1,11 +1,9 @@
+name: Create Release
+
 on:
   workflow_call:
     inputs:
-      workdir:
-        required: false
-        type: string
-        default: "."
-      extrasteps:
+      overlay_cache_key:
         required: false
         type: string
         default: ""
@@ -15,10 +13,8 @@ on:
   #   tags:
   #     - "v*" # Push events to matching v*, i.e. v1.0, v20.15.10
 
-name: Create Release
-
 env:
-  release_workdir: "${{ inputs.workdir || '.' }}"
+  workdir: _workdir
 
 jobs:
   build:
@@ -28,20 +24,41 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v2
 
-      - name: Run Optional Extra Steps
-        if: ${{ inputs.extrasteps != null }}
-        run: ${{ inputs.extrasteps }} $release_workdir
-
       - name: Set up QEMU for multi-arch builds
         uses: docker/setup-qemu-action@v2
 
       - name: Set up Docker buildx for multi-arch builds
         uses: docker/setup-buildx-action@v2
 
+      # Steps for processing a worflow caller (i.e. overlayed software)
+      - name: Download Overlay Cache
+        id: download_overlay_cache
+        if: inputs.overlay_cache_key != null
+        uses: actions/cache@v3
+        with:
+          path: _workdir
+          key: ${{ inputs.overlay_cache_key }}
+
+      - name: Set the Cache Working Directory
+        id: cache_dir
+        run: |
+          if [ ${{ steps.download_overlay_cache.outcome }} == 'skipped' ]; then
+            echo "Cache step skipped, use current repo as working directory"
+            echo ::set-output name=workdir::.
+          else
+            if [ ${{ steps.download_overlay_cache.outputs.cache-hit }} == 'true' ]; then
+              echo "Overlay cache found, use cache [$workdir] as working directory"
+              echo ::set-output name=workdir::$workdir
+            else
+              echo "Overlay cache expected but not found. Exit"
+              exit 1
+            fi
+          fi
+
       ## Build the Photon release
       - name: Build Photon Release
         id: build_release
-        working-directory: ${{ github.workspace }}/${{ env.release_workdir }}
+        working-directory: ${{ steps.cache_dir.outputs.workdir }}
         run: |
           ./release.sh -a -p -r release_manifest -c ${{ runner.temp }}
 
@@ -53,16 +70,16 @@ jobs:
         run: |
           set -x
 
-          md5sum $release_workdir/*.tbz2 > $release_workdir/checksums.md5
+          md5sum ${{ steps.cache_dir.outputs.workdir }}/*.tbz2 > ${{ steps.cache_dir.outputs.workdir }}/checksums.md5
 
           # split the assets into max size 2GiB
-          for asset in $release_workdir/*.tbz2; do
+          for asset in ${{ steps.cache_dir.outputs.workdir }}/*.tbz2; do
             split --bytes=2GB $asset --suffix-length=1 --numeric-suffixes "${asset}-" --verbose
           done
 
           # create the array of assets to upload into the release
           assets=()
-          for asset in $release_workdir/*.tbz2-*; do
+          for asset in ${{ steps.cache_dir.outputs.workdir }}/*.tbz2-*; do
             assets+=("$asset")
           done
 
@@ -70,7 +87,7 @@ jobs:
           tag_name="${GITHUB_REF##*/}"
           export commit_msg="$(git log --format=%B -n 1 $tag_name)"
 
-          pushd ${{ github.workspace }}/$release_workdir
+          pushd ${{ steps.cache_dir.outputs.workdir }}
           photon_core=()
           photon_agent=()
           for asset in *.tbz2-*; do
@@ -87,11 +104,11 @@ jobs:
 
           # create the release and upload assets
           #hub release create "${assets[@]}" -m "${body}" "${tag_name}"
-          gh release create "${tag_name}" --title="Release $tag_name" --notes-file=$release_workdir/rel_notes
+          gh release create "${tag_name}" --title="Release $tag_name" --notes-file=${{ steps.cache_dir.outputs.workdir }}/rel_notes
           for asset in "${assets[@]}"; do
             gh release upload "${tag_name}" "${asset}"
           done
 
-          gh release upload "${tag_name}" "$release_workdir/checksums.md5"
+          gh release upload "${tag_name}" "${{ steps.cache_dir.outputs.workdir }}/checksums.md5"
 
           echo "Release [${tag_name}] creation complete"
