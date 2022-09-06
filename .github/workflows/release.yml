@@ -18,8 +18,7 @@ on:
 name: Create Release
 
 env:
-  release_workdir: "release/${{ inputs.workdir || '.' }}"
-  release_dir: "release"
+  release_workdir: "${{ inputs.workdir || '.' }}"
 
 jobs:
   build:
@@ -28,8 +27,6 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
-        with:
-          path: release
 
       - name: Run Optional Extra Steps
         if: ${{ inputs.extrasteps != null }}
@@ -44,10 +41,9 @@ jobs:
       ## Build the Photon release
       - name: Build Photon Release
         id: build_release
+        working-directory: ${{ github.workspace }}/${{ env.release_workdir }}
         run: |
-          pushd ${{ github.workspace }}/$release_workdir
-          ./release.sh -a -p -r release_manifest -c ${{ github.workspace }}
-          popd
+          ./release.sh -a -p -r release_manifest -c ${{ runner.temp }}
 
       - name: Create Release
         # Split the assets into 2GB max size (GitHub limit) and upload to new release
@@ -72,9 +68,7 @@ jobs:
 
           # create the release message
           tag_name="${GITHUB_REF##*/}"
-          pushd ${{ github.workspace }}/$release_dir
           export commit_msg="$(git log --format=%B -n 1 $tag_name)"
-          popd
 
           pushd ${{ github.workspace }}/$release_workdir
           photon_core=()
