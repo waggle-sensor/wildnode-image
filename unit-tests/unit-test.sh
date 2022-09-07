@@ -69,7 +69,6 @@ TEST_NAME=${TEST_KEY}${TEST_NO}
            -o $TEST_NAME \
            -m \
            -t \
-           -f \
            -z
 
 TEST_PATH=$(find ${TEST_ROOT}/${TEST_NAME}_nx*.tbz2 -type f)
@@ -153,8 +152,7 @@ TEST_NAME=${TEST_KEY}${TEST_NO}
            -o $TEST_NAME \
            -m \
            -t \
-           -a \
-           -f
+           -a
 
 TEST_PATH=$(find ${TEST_ROOT}/${TEST_NAME}_nx*.tbz2 -type f)
 TEST_MFI_PATH=$(find ${TEST_ROOT}/${TEST_NAME}_mfi*.tbz2 -type f)
@@ -234,8 +232,7 @@ TEST_NAME=${TEST_KEY}${TEST_NO}
 ./build.sh -l ${TEST_ROOT}/unit-tests/nvidia_l4t/test_nvidia_l4t.tbz2 \
            -r ${TEST_ROOT}/unit-tests/sample_rootfs/test_sample_rootfs.tbz2 \
            -o $TEST_NAME \
-           -t \
-           -f
+           -t
 
 TEST_PATH=$(find ${TEST_ROOT}/${TEST_NAME}_nx*.tbz2 -type f)
 

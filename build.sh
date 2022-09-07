@@ -3,7 +3,7 @@
 print_help() {
   echo """
 usage: build.sh -l <Nvidia L4T tarball> [-c <CTI L4T tarball>] [-r <base rootfs tarball>]
-    [-b <bootloader .bin file>] [-o <custom output name>] [-d] [-m] [-t] [-z] [-f] [-a]
+    [-b <bootloader .bin file>] [-o <custom output name>] [-d] [-m] [-t] [-z] [-a]
 
 Create the Waggle operating system for the Nvidia NX development kit or the
 ConnectTech Photon NX (production) hardware ('-c' option). Produces an optional
@@ -30,7 +30,6 @@ saved.
   -a : (optional) when building the Photon image build the 'agent' image instead of 'core'
   -d : don't build the image and enter debug mode within the Docker build environment.
   -z : do a full non-cached build.
-  -f : force the build to proceed (debugging only) without checking for tagged commit
   -? : print this help menu
 """
 }
@@ -46,9 +45,8 @@ CBOOT_BIN=
 CREATE_MASS_FLASH=
 CREATE_DEV_TARBALL=
 DOCKER_CACHE=
-FORCE=
 AGENT_MODE=
-while getopts "l:c:r:b:mto:dpzfa?" opt; do
+while getopts "l:c:r:b:mto:dpza?" opt; do
   case $opt in
     l) L4T_IMAGE=$(realpath $OPTARG)
        L4T_IMAGE_FILE=$(basename $L4T_IMAGE)
@@ -82,10 +80,6 @@ while getopts "l:c:r:b:mto:dpzfa?" opt; do
       echo "** EXECUTING A FULL BUILD (no cache) **"
       DOCKER_CACHE="--no-cache"
       ;;
-    f) # force build
-      echo "** Force build: ignore tag depth check **"
-      FORCE=1
-      ;;
     a) # photon (agent) build
       echo "** Building Photon (agent) image **"
       AGENT_MODE="-agent"
@@ -100,14 +94,6 @@ done
 
 # create version string
 PROJ_VERSION="${NXNAME}-$(git describe --tags --long --dirty | cut -c2-)"
-
-TAG_DEPTH=$(echo ${PROJ_VERSION} | cut -d '-' -f 3)
-if [[ -z "${FORCE}" && "${TAG_DEPTH}_" != "0_" ]]; then
-  echo "Error:"
-  echo "  The current git commit has not been tagged. Please create a new tag first to ensure a proper unique version number."
-  echo "  Use -f to ignore error (for debugging only)."
-  exit 1
-fi
 
 echo "Build Parameters:"
 echo -e " Nvidia L4T:\t${L4T_IMAGE}"
