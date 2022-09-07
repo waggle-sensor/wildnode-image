@@ -1,8 +1,12 @@
 # Connecting the Waggle Node to a Waggle Wifi Hotspot
 
+**Table of Contents**
+- [Connecting the Waggle Node to a Waggle Wifi Hotspot](#connecting-the-waggle-node-to-a-waggle-wifi-hotspot)
+- [Create the Waggle Wifi network with the following configuration](#create-the-waggle-wifi-network-with-the-following-configuration)
+
 The system comes pre-configured to work with a Waggle Wifi hotspot. The following are the instructions to create the Waggle Wifi hotspot network.
 
-## Create the Waggle Wifi network with the following configuration
+# Create the Waggle Wifi network with the following configuration
 
 The following are the Wifi credentials that need to be configured on a hotspot or access-point with Internet access:
 

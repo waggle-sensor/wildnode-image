@@ -1,5 +1,11 @@
 # How to Configure Wifi as the Primary Internet Uplink
 
+**Table of Contents**
+- [How to Configure Wifi as the Primary Internet Uplink](#how-to-configure-wifi-as-the-primary-internet-uplink)
+  - [1: Create the `NetworkManager` configuration using `nmtui` or `nmcli`](#1-create-the-networkmanager-configuration-using-nmtui-or-nmcli)
+  - [2: Copy the `NetworkManager` configuration to the read-only eMMC](#2-copy-the-networkmanager-configuration-to-the-read-only-emmc)
+  - [3: Copy the `NetworkManager` configuration to the recovery SD Card](#3-copy-the-networkmanager-configuration-to-the-recovery-sd-card)
+
 The following are instructions on how to add the customizations to the node operating system to use a custom Wifi access-point as the primary uplink for the node. These are the instructions that you should follow if you have an existing Wifi network and you want to connect the node to that network.
 
 > These instructions require Admin access to the node
