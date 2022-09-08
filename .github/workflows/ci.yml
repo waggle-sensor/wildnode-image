@@ -7,6 +7,10 @@ on:
         required: false
         type: string
         default: ""
+      version_extension:
+        required: false
+        type: string
+        default: ""
   ## Disable CI in this public repo until after a self-hosted runner can be setup safely
   # pull_request:
   #   branches: [main]
@@ -65,4 +69,8 @@ jobs:
       - name: Run unit-test
         working-directory: ${{ steps.cache_dir.outputs.workdir }}
         run: |
-          ./unit-tests/unit-test.sh
+          if [ ${{ inputs.version_extension }} != null ]; then
+            ./unit-tests/unit-test.sh -e ${{ inputs.version_extension }}
+          else
+            ./unit-tests/unit-test.sh
+          fi

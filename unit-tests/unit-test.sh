@@ -6,6 +6,16 @@ TEST_ROOT=`pwd`
 RESULTS_DIR=./unit-tests/results
 TEST_KEY="test"
 
+print_help() {
+  echo """
+usage: $0 [-e <version string>]
+
+  Runs image building unit testing.
+
+  -e : (optional) version extension string (default: <empty>)
+  -? : print this help menu
+"""
+}
 
 function test_setup()
 {
@@ -41,6 +51,18 @@ trap cleanup EXIT
 
 test_setup
 
+VERSION_EXTENSION=
+while getopts "e:" opt; do
+  case $opt in
+    e) VERSION_EXTENSION="-e ${OPTARG}"
+      ;;
+    ?|*)
+      print_help
+      exit 1
+      ;;
+  esac
+done
+
 ## The build can be given many options. Not all option combinations are tested
 #  but instead a sub-set that gives the most coverage
 #  Options:
@@ -66,7 +88,7 @@ TEST_NAME=${TEST_KEY}${TEST_NO}
 ./build.sh -l ${TEST_ROOT}/unit-tests/nvidia_l4t/test_nvidia_l4t.tbz2 \
            -c ${TEST_ROOT}/unit-tests/cti_l4t/test_cti_l4t.tgz \
            -b ${TEST_ROOT}/unit-tests/cboot/cboot_test.bin \
-           -o $TEST_NAME \
+           -o $TEST_NAME $VERSION_EXTENSION \
            -m \
            -t \
            -z
@@ -149,7 +171,7 @@ TEST_NAME=${TEST_KEY}${TEST_NO}
 ./build.sh -l ${TEST_ROOT}/unit-tests/nvidia_l4t/test_nvidia_l4t.tbz2 \
            -c ${TEST_ROOT}/unit-tests/cti_l4t/test_cti_l4t.tgz \
            -b ${TEST_ROOT}/unit-tests/cboot/cboot_test.bin \
-           -o $TEST_NAME \
+           -o $TEST_NAME $VERSION_EXTENSION \
            -m \
            -t \
            -a
@@ -231,7 +253,7 @@ echo "${TEST_NO}: L4T only, sample rootfs, L4T provided CBoot, Full tarball only
 TEST_NAME=${TEST_KEY}${TEST_NO}
 ./build.sh -l ${TEST_ROOT}/unit-tests/nvidia_l4t/test_nvidia_l4t.tbz2 \
            -r ${TEST_ROOT}/unit-tests/sample_rootfs/test_sample_rootfs.tbz2 \
-           -o $TEST_NAME \
+           -o $TEST_NAME $VERSION_EXTENSION \
            -t
 
 TEST_PATH=$(find ${TEST_ROOT}/${TEST_NAME}_nx*.tbz2 -type f)

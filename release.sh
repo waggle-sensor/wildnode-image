@@ -2,7 +2,7 @@
 
 print_help() {
   echo """
-usage: release.sh -r <release manifest> -c <cache directory> [-p] [-a]
+usage: release.sh -r <release manifest> -c <cache directory> [-e <version string>] [-p] [-a]
 
 Download all assets outlined in the <release manifest> and create 2 builds:
 - Photon production (core)
@@ -12,6 +12,7 @@ Download all assets outlined in the <release manifest> and create 2 builds:
   -c : cache directory to store downloaded artifacts
   -p : (optional) create the Photon (core) release
   -a : (optional) create the Photon (agent) release
+  -e : (optional) version extension string (default: <empty>)
 """
 }
 
@@ -57,7 +58,8 @@ ARG_MANIFEST=
 ARG_CACHE=
 ARG_AGENT=
 ARG_CORE=
-while getopts "r:c:ap?" opt; do
+VERSION_EXTENSION=
+while getopts "r:c:e:ap?" opt; do
   case $opt in
     r) ARG_MANIFEST=$OPTARG
       ;;
@@ -68,6 +70,8 @@ while getopts "r:c:ap?" opt; do
       ;;
     p) echo "** Create Photon (core) Release **"
       ARG_CORE=1
+      ;;
+    e) VERSION_EXTENSION="-e $OPTARG"
       ;;
     ?|*)
       print_help
@@ -125,10 +129,10 @@ popd # cache folder
 
 if [ -n "${ARG_CORE}" ]; then
     echo "Execute build - Photon (Core) Image (production)"
-    ${BUILD_CMD} -l ${NVIDIA_BASE} -c ${CTI_BSP} -b ${CBOOT} -o photon-core -m
+    ${BUILD_CMD} -l ${NVIDIA_BASE} -c ${CTI_BSP} -b ${CBOOT} ${VERSION_EXTENSION} -o photon-core -m
 fi
 
 if [ -n "${ARG_AGENT}" ]; then
     echo "Execute build - Photon (Agent) Image (production)"
-    ${BUILD_CMD} -l ${NVIDIA_BASE} -c ${CTI_BSP} -b ${CBOOT} -o photon-agent -m -a
+    ${BUILD_CMD} -l ${NVIDIA_BASE} -c ${CTI_BSP} -b ${CBOOT} ${VERSION_EXTENSION} -o photon-agent -m -a
 fi

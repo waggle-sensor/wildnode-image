@@ -15,6 +15,8 @@ version can be compared to the flashing archive file name.
 
 The 'nx-1.4.1-0-gf5fd9c1' should match.
 
+> If a version extension is provided by a [downstream customized repos](https://github.com/waggle-sensor/wildnode-customize-example) then the version string will resemble the following: `nx-1.9.1-0-gfe06d2d-custom-1.0.0-1-gfe06d2d` where the `custom-1.0.0-1-gfe06d2d` part is the version extension provided by the downstream build steps.
+
 Proceed to ["Factory Provision"](./04_factory.md)
 
 # Differences in Waggle OS Version Between NVidia Dev Kit and Photon

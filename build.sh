@@ -3,7 +3,7 @@
 print_help() {
   echo """
 usage: build.sh -l <Nvidia L4T tarball> [-c <CTI L4T tarball>] [-r <base rootfs tarball>]
-    [-b <bootloader .bin file>] [-o <custom output name>] [-d] [-m] [-t] [-z] [-a]
+    [-b <bootloader .bin file>] [-o <custom output name>] [-e <version string>] [-d] [-m] [-t] [-z] [-a]
 
 Create the Waggle operating system for the Nvidia NX development kit or the
 ConnectTech Photon NX (production) hardware ('-c' option). Produces an optional
@@ -28,6 +28,7 @@ saved.
   -t : (optional) create the development tarball
   -o : (optional) output filename (i.e. custom_name) (default: l4t)
   -a : (optional) when building the Photon image build the 'agent' image instead of 'core'
+  -e : (optional) version extension string (default: <empty>)
   -d : don't build the image and enter debug mode within the Docker build environment.
   -z : do a full non-cached build.
   -? : print this help menu
@@ -46,7 +47,8 @@ CREATE_MASS_FLASH=
 CREATE_DEV_TARBALL=
 DOCKER_CACHE=
 AGENT_MODE=
-while getopts "l:c:r:b:mto:dpza?" opt; do
+VERSION_EXTENSION=
+while getopts "l:c:r:b:mto:e:dpza?" opt; do
   case $opt in
     l) L4T_IMAGE=$(realpath $OPTARG)
        L4T_IMAGE_FILE=$(basename $L4T_IMAGE)
@@ -71,6 +73,8 @@ while getopts "l:c:r:b:mto:dpza?" opt; do
       ;;
     o) OUTPUT_NAME=$OPTARG
       ;;
+    e) VERSION_EXTENSION=$OPTARG
+      ;;
     d) # enable debug mode
       echo "** DEBUG MODE **"
       TTY="-it"
@@ -94,6 +98,9 @@ done
 
 # create version string
 PROJ_VERSION="${NXNAME}-$(git describe --tags --long --dirty | cut -c2-)"
+if [ -n "$VERSION_EXTENSION" ]; then
+  PROJ_VERSION=$PROJ_VERSION-$VERSION_EXTENSION
+fi
 
 echo "Build Parameters:"
 echo -e " Nvidia L4T:\t${L4T_IMAGE}"

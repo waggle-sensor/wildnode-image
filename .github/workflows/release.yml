@@ -7,6 +7,10 @@ on:
         required: false
         type: string
         default: ""
+      version_extension:
+        required: false
+        type: string
+        default: ""
   ## Disable release in this public repo until after a self-hosted runner can be setup safely
   # push:
   #   # Sequence of patterns matched against refs/tags
@@ -60,7 +64,11 @@ jobs:
         id: build_release
         working-directory: ${{ steps.cache_dir.outputs.workdir }}
         run: |
-          ./release.sh -a -p -r release_manifest -c ${{ runner.temp }}
+          if [ ${{ inputs.version_extension }} != null ]; then
+            ./release.sh -a -p -r release_manifest -c ${{ runner.temp }} -e ${{ inputs.version_extension }}
+          else
+            ./release.sh -a -p -r release_manifest -c ${{ runner.temp }}
+          fi
 
       - name: Create Release
         # Split the assets into 2GB max size (GitHub limit) and upload to new release
