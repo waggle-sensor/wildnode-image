@@ -10,4 +10,4 @@ ${core_files}
 ${agent_files}
 
 ## Flashing the Build
-Release assets are "mass flash" archives.  See the [Flashing a "NVidia mass flash archive"](https://github.com/waggle-sensor/wildnode-image/blob/main/guides/build-guides/02_flashing.md#option-2-flashing-a-nvidia-mass-flash-archive) section in the [README](https://github.com/waggle-sensor/wildnode-image/blob/main/guides/build-guides/02_flashing.md) for flashing instructions.
+Release assets are "mass flash" archives.  See the [Flashing a "NVidia mass flash archive"](https://github.com/waggle-sensor/wildnode-image/blob/main/guides/build-guides/02_flash.md#option-2-flashing-a-nvidia-mass-flash-archive) section in the [README](https://github.com/waggle-sensor/wildnode-image/blob/main/guides/build-guides/02_flash.md) for flashing instructions.
