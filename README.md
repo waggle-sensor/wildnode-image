@@ -12,6 +12,7 @@
   - [Connect Tech Photon NGX003](#connect-tech-photon-ngx003)
     - [Photon L4T BSP Extension Instructions](#photon-l4t-bsp-extension-instructions)
   - [NVidia L4T Root File System Creation Instructions](#nvidia-l4t-root-file-system-creation-instructions)
+  - [Surya Factory Flashing Tools](#surya-factory-flashing-tools)
 
 Creates artifact(s) containing images for all bootloader, kernel and file system partitions including all necessary tools to flash the NVidia NX hardware of a [Wild Waggle Node](https://github.com/waggle-sensor/wild-waggle-node).
 
@@ -127,3 +128,7 @@ The following URL is to the NVidia L4T Developer Guide: [https://docs.nvidia.com
 Here you can find instructions on how to create the the complete rootfs from
 the NVidia L4T and NVidia sample rootfs in the "Setting Up Your File System"
 section.
+
+## Surya Factory Flashing Tools
+
+The images produced by this repo and downstream [customized repos](https://github.com/waggle-sensor/wildnode-customize-example) can be flashed and provisioned using the factory tools found at [surya-tools](https://github.com/waggle-sensor/surya-tools).
