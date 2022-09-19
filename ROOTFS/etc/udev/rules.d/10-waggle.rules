@@ -20,3 +20,6 @@ KERNEL=="wlan*", ATTR{address}=="70:66:55:*", NAME="wifi0"
 
 ## GPS configuration
 ACTION=="add", SUBSYSTEM=="tty", KERNEL=="ttyACM[0-9]*", ATTRS{idVendor}=="1546", ATTRS{idProduct}=="01a7", TAG+="systemd", SYMLINK+="gps", ENV{ID_MM_DEVICE_IGNORE}="1"
+
+## Air Quality Sensor configuration
+ACTION=="add", SUBSYSTEM=="tty", KERNEL=="ttyUSB[0-9]*", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", TAG+="systemd", SYMLINK+="airquality", ENV{ID_MM_DEVICE_IGNORE}="1"
