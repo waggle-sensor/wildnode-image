@@ -49,8 +49,8 @@ libstdc++6=8.4.0-1ubuntu1~18.04
 libc6=2.27-3ubuntu1.2
 libegl1=1.0.0-2ubuntu2.3
 libgles2=1.0.0-2ubuntu2.3
-libwayland-client0=1.16.0-1ubuntu1.1~18.04.3
-libwayland-egl1=1.16.0-1ubuntu1.1~18.04.3
+libwayland-client0=1.16.0-1ubuntu1.1~18.04.4
+libwayland-egl1=1.16.0-1ubuntu1.1~18.04.4
 libx11-6=2:1.6.4-3ubuntu0.4
 libxkbcommon0=0.8.2-1~ubuntu18.04.1
 
@@ -69,8 +69,8 @@ libgstreamer-plugins-bad1.0-0=1.14.5-0ubuntu1~18.04.1
 libgstreamer-plugins-base1.0-0=1.14.5-0ubuntu1~18.04.3
 libpcre3=2:8.39-9
 libstdc++6=8.4.0-1ubuntu1~18.04
-libwayland-client0=1.16.0-1ubuntu1.1~18.04.3
-libwayland-egl1=1.16.0-1ubuntu1.1~18.04.3
+libwayland-client0=1.16.0-1ubuntu1.1~18.04.4
+libwayland-egl1=1.16.0-1ubuntu1.1~18.04.4
 libx11-6=2:1.6.4-3ubuntu0.4
 libxcb1=1.13-2~ubuntu18.04
 libxdmcp6=1:1.1.2-3
@@ -153,8 +153,8 @@ libstdc++6=8.4.0-1ubuntu1~18.04
 # nvidia-l4t-wayland
 libc6=2.27-3ubuntu1.2
 libffi6=3.2.1-8
-libwayland-client0=1.16.0-1ubuntu1.1~18.04.3
-libwayland-server0=1.16.0-1ubuntu1.1~18.04.3
+libwayland-client0=1.16.0-1ubuntu1.1~18.04.4
+libwayland-server0=1.16.0-1ubuntu1.1~18.04.4
 
 # nvidia-l4t-weston
 libaudit1=1:2.8.2-1ubuntu1
@@ -167,17 +167,17 @@ libffi6=3.2.1-8
 libgbm1=20.0.8-0ubuntu1~18.04.1
 libgles2=1.0.0-2ubuntu2.3
 libinput10=1.10.4-1ubuntu0.18.04.3
-libjpeg-turbo8=1.5.2-0ubuntu5.18.04.4
+libjpeg-turbo8=1.5.2-0ubuntu5.18.04.6
 libpam0g=1.1.8-3.6ubuntu2.18.04.2
 libpixman-1-0=0.34.0-2
 libpng16-16=1.6.34-1ubuntu0.18.04.2
 libstdc++6=8.4.0-1ubuntu1~18.04
-libudev1=237-3ubuntu10.53
+libudev1=237-3ubuntu10.56
 libunwind8=1.2.1-8
-libwayland-client0=1.16.0-1ubuntu1.1~18.04.3
-libwayland-cursor0=1.16.0-1ubuntu1.1~18.04.3
-libwayland-egl1=1.16.0-1ubuntu1.1~18.04.3
-libwayland-server0=1.16.0-1ubuntu1.1~18.04.3
+libwayland-client0=1.16.0-1ubuntu1.1~18.04.4
+libwayland-cursor0=1.16.0-1ubuntu1.1~18.04.4
+libwayland-egl1=1.16.0-1ubuntu1.1~18.04.4
+libwayland-server0=1.16.0-1ubuntu1.1~18.04.4
 libxkbcommon0=0.8.2-1~ubuntu18.04.1
 zlib1g=1:1.2.11.dfsg-0ubuntu2
 
