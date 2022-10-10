@@ -10,7 +10,7 @@ FROM arm64v8/ubuntu:bionic-20200921 as rootfs
 COPY --from=qemu_src /usr/bin/qemu-aarch64-static /usr/bin/qemu-aarch64-static
 
 # Install systemd first to ensure future installs have it
-RUN apt-get update && apt-get install -y systemd-sysv=237-3ubuntu10.50
+RUN apt-get update && apt-get install -y systemd-sysv=237-3ubuntu10.56
 
 # Setup the locales to ensure future installs have it
 RUN apt-get update && apt-get install -y locales=2.27-3ubuntu1.5
@@ -47,7 +47,7 @@ RUN apt-get update && apt-get install -y \
 RUN apt-get update && apt-get install --no-install-recommends -y \
     apt-transport-https=1.6.12ubuntu0.2 \
     ca-certificates=20211016~18.04.1 \
-    curl=7.58.0-2ubuntu3.20 \
+    curl=7.58.0-2ubuntu3.21 \
     gnupg-agent=2.2.4-1ubuntu1.6 \
     software-properties-common=0.96.24.32.18
 RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
