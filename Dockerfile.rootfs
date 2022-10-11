@@ -125,9 +125,17 @@ WORKDIR /tmp/waggledebs
 RUN wget https://github.com/waggle-sensor/waggle-common-tools/releases/download/v1.0.0/waggle-common-tools_1.0.0_all.deb ; \
     wget https://github.com/waggle-sensor/waggle-nodeid/releases/download/v1.0.7/waggle-nodeid_1.0.7_all.deb
 
-# Core only apps
+# Core only apps - RPi
 RUN if [ -z "$AGENT_MODE" ]; then \
-    wget https://github.com/waggle-sensor/waggle-rpi-pxeboot/releases/download/v2.1.8/sage-rpi-pxeboot_2.1.8_all.deb ; \
+    wget https://github.com/waggle-sensor/waggle-rpi-pxeboot/releases/download/v2.2.0/sage-rpi-pxeboot_2.2.0_all.deb ; \
+    wget https://github.com/waggle-sensor/waggle-rpi-pxeboot/releases/download/v2.2.0/sage-rpi-pxeboot-boot_2.2.0_all.deb ; \
+    wget https://github.com/waggle-sensor/waggle-rpi-pxeboot/releases/download/v2.2.0/sage-rpi-pxeboot-os-usrlibfw_2.2.0_all.deb ; \
+    wget https://github.com/waggle-sensor/waggle-rpi-pxeboot/releases/download/v2.2.0/sage-rpi-pxeboot-os-usrlib_2.2.0_all.deb ; \
+    wget https://github.com/waggle-sensor/waggle-rpi-pxeboot/releases/download/v2.2.0/sage-rpi-pxeboot-os-other_2.2.0_all.deb ; \
+    fi
+
+# Core only apps - Others
+RUN if [ -z "$AGENT_MODE" ]; then \
     wget https://github.com/waggle-sensor/waggle-wagman-watchdog/releases/download/v1.3.0/sage-wagman-watchdog_1.3.0_all.deb ; \
     wget https://github.com/waggle-sensor/waggle-node-hostname/releases/download/v1.2.1/waggle-node-hostname_1.2.1_all.deb ; \
     wget https://github.com/waggle-sensor/waggle-internet-share/releases/download/v1.4.1/waggle-internet-share_1.4.1_all.deb ; \
@@ -147,10 +155,19 @@ RUN apt-get update && apt-get install -y \
     waggle-common-tools \
     waggle-nodeid
 
-# Core only apps
+# Core only apps - RPi
 RUN if [ -z "$AGENT_MODE" ]; then \
     apt-get update && apt-get install -y \
     sage-rpi-pxeboot \
+    sage-rpi-pxeboot-boot \
+    sage-rpi-pxeboot-os-usrlibfw \
+    sage-rpi-pxeboot-os-usrlib \
+    sage-rpi-pxeboot-os-other; \
+    fi
+
+# Core only apps - Others
+RUN if [ -z "$AGENT_MODE" ]; then \
+    apt-get update && apt-get install -y \
     sage-wagman-watchdog \
     waggle-node-hostname \
     waggle-internet-share \
