@@ -1,6 +1,6 @@
 # Testing
 
-**Table of Conents**
+**Table of Contents**
 - [Testing](#testing)
 - [GPU Stress Test](#gpu-stress-test)
 
