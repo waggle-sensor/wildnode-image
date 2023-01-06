@@ -143,7 +143,7 @@ RUN if [ -z "$AGENT_MODE" ]; then \
     wget https://github.com/waggle-sensor/waggle-bk-registration/releases/download/v2.2.2/waggle-bk-registration_2.2.2_all.deb ; \
     wget https://github.com/waggle-sensor/waggle-bk-reverse-tunnel/releases/download/v2.3.2/waggle-bk-reverse-tunnel_2.3.2_all.deb ; \
     wget https://github.com/waggle-sensor/waggle-wan-tunnel/releases/download/v1.0.0/waggle-wan-tunnel_1.0.0_all.deb ; \
-    wget https://github.com/waggle-sensor/waggle-powercycle/releases/download/1.0.0/waggle-powercycle_1.0.0_all.deb ; \
+    wget https://github.com/waggle-sensor/waggle-powercycle/releases/download/1.1.0/waggle-powercycle_1.1.0_all.deb ; \
     wget https://github.com/waggle-sensor/waggle-firewall/releases/download/v1.1.3/waggle-firewall_1.1.3_all.deb ; \
     fi
 
