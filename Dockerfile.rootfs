@@ -265,6 +265,9 @@ RUN if [ -z "$AGENT_MODE" ]; then \
 # configure authorized keys to use "factory/dev" mode
 RUN ln -s /root/.ssh/authorized_keys.dev /root/.ssh/authorized_keys
 
+# configure the nvpmodel service to be enabled
+RUN ln -s /etc/systemd/system/nvpmodel.service /etc/systemd/system/multi-user.target.wants/nvpmodel.service
+
 # enable the root user to login
 RUN chpasswd -e < /root/credentials && \
     rm /root/credentials
