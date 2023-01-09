@@ -235,6 +235,7 @@ RUN if [ -z "$AGENT_MODE" ]; then \
     rm -rf /etc/rc.local-agent ; \
     rm -rf /etc/hosts.allow-agent ; \
     rm -rf /etc/hosts.deny-agent ; \
+    rm -rf /var/lib/nvpmodel/status-agent ; \
     fi
 
 ## Perform Agent only rootfs modifications
@@ -247,6 +248,7 @@ RUN if [ -n "$AGENT_MODE" ]; then \
     mv /etc/rc.local-agent /etc/rc.local ; \
     mv /etc/hosts.allow-agent /etc/hosts.allow ; \
     mv /etc/hosts.deny-agent /etc/hosts.deny ; \
+    mv /var/lib/nvpmodel/status-agent /var/lib/nvpmodel/status ; \
     fi
 
 # enable the Waggle Power LED service to run
