@@ -46,8 +46,8 @@ RUN apt-get update && apt-get install -y \
 ## Install docker - start
 RUN apt-get update && apt-get install --no-install-recommends -y \
     apt-transport-https=1.6.12ubuntu0.2 \
-    ca-certificates=20211016~18.04.1 \
-    curl=7.58.0-2ubuntu3.21 \
+    ca-certificates=20211016ubuntu0.18.04.1 \
+    curl=7.58.0-2ubuntu3.22 \
     gnupg-agent=2.2.4-1ubuntu1.6 \
     software-properties-common=0.96.24.32.18
 RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
