@@ -48,11 +48,11 @@ jobs:
         run: |
           if [ ${{ steps.download_overlay_cache.outcome }} == 'skipped' ]; then
             echo "Cache step skipped, use current repo as working directory"
-            echo ::set-output name=workdir::.
+            echo "workdir=." >> $GITHUB_OUTPUT
           else
             if [ ${{ steps.download_overlay_cache.outputs.cache-hit }} == 'true' ]; then
               echo "Overlay cache found, use cache [$workdir] as working directory"
-              echo ::set-output name=workdir::$workdir
+              echo "workdir=$workdir" >> $GITHUB_OUTPUT
             else
               echo "Overlay cache expected but not found. Exit"
               exit 1
