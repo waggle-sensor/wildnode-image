@@ -65,9 +65,9 @@ ARG AGENT_MODE
 
 # Install K3S (skip enable, will be enabled in factory provision)
 RUN if [ -z "$AGENT_MODE" ]; then \
-    curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=v1.20.2+k3s1 INSTALL_K3S_SKIP_ENABLE=true K3S_CLUSTER_SECRET=4tX0DUZ0uQknRtVUAKjt sh - ; \
+    curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=v1.25.4+k3s1 INSTALL_K3S_SKIP_ENABLE=true K3S_AGENT_TOKEN=4tX0DUZ0uQknRtVUAKjt sh - ; \
     else \
-    curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=v1.20.2+k3s1 INSTALL_K3S_SKIP_ENABLE=true K3S_URL=https://10.31.81.1:6443 K3S_TOKEN=4tX0DUZ0uQknRtVUAKjt sh - ; \
+    curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=v1.25.4+k3s1 INSTALL_K3S_SKIP_ENABLE=true K3S_URL=https://10.31.81.1:6443 K3S_TOKEN=4tX0DUZ0uQknRtVUAKjt sh - ; \
     fi
 
 # Install necessary items & helpful tools (common)
