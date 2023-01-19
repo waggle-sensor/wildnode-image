@@ -116,7 +116,7 @@ if [ -n "$NVME_PART_SIZE_SWAP" ]; then
     # update the fstab with the new swap space
     backup_file /etc/fstab $TS
     echo "# nvme swap" >> /etc/fstab
-    echo "$SWAP_DEVICE swap swap defaults,nofail 0 0" >> /etc/fstab
+    echo "$SWAP_DEVICE swap swap defaults,nofail,pri=100 0 0" >> /etc/fstab
 fi
 
 
