@@ -127,11 +127,11 @@ RUN wget https://github.com/waggle-sensor/waggle-common-tools/releases/download/
 
 # Core only apps - RPi
 RUN if [ -z "$AGENT_MODE" ]; then \
-    wget https://github.com/waggle-sensor/waggle-rpi-pxeboot/releases/download/v2.3.0/sage-rpi-pxeboot_2.3.0_all.deb ; \
-    wget https://github.com/waggle-sensor/waggle-rpi-pxeboot/releases/download/v2.3.0/sage-rpi-pxeboot-boot_2.3.0_all.deb ; \
-    wget https://github.com/waggle-sensor/waggle-rpi-pxeboot/releases/download/v2.3.0/sage-rpi-pxeboot-os-usrlibfw_2.3.0_all.deb ; \
-    wget https://github.com/waggle-sensor/waggle-rpi-pxeboot/releases/download/v2.3.0/sage-rpi-pxeboot-os-usrlib_2.3.0_all.deb ; \
-    wget https://github.com/waggle-sensor/waggle-rpi-pxeboot/releases/download/v2.3.0/sage-rpi-pxeboot-os-other_2.3.0_all.deb ; \
+    wget https://github.com/waggle-sensor/waggle-rpi-pxeboot/releases/download/v2.4.0/sage-rpi-pxeboot_2.4.0_all.deb ; \
+    wget https://github.com/waggle-sensor/waggle-rpi-pxeboot/releases/download/v2.4.0/sage-rpi-pxeboot-boot_2.4.0_all.deb ; \
+    wget https://github.com/waggle-sensor/waggle-rpi-pxeboot/releases/download/v2.4.0/sage-rpi-pxeboot-os-usrlibfw_2.4.0_all.deb ; \
+    wget https://github.com/waggle-sensor/waggle-rpi-pxeboot/releases/download/v2.4.0/sage-rpi-pxeboot-os-usrlib_2.4.0_all.deb ; \
+    wget https://github.com/waggle-sensor/waggle-rpi-pxeboot/releases/download/v2.4.0/sage-rpi-pxeboot-os-other_2.4.0_all.deb ; \
     fi
 
 # Core only apps - Others
