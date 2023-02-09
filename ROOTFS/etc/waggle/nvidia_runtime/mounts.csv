@@ -1,0 +1,15 @@
+dir, /usr/local/cuda-10.2
+sym, /usr/lib/aarch64-linux-gnu/libcublasLt.so
+sym, /usr/lib/aarch64-linux-gnu/libnvblas.so
+sym, /usr/lib/aarch64-linux-gnu/libcublas.so
+lib, /usr/lib/aarch64-linux-gnu/libcublas.so.10.2.2.89
+lib, /usr/lib/aarch64-linux-gnu/libcublasLt.so.10.2.2.89
+lib, /usr/lib/aarch64-linux-gnu/libnvblas.so.10.2.2.89
+sym, /usr/lib/aarch64-linux-gnu/libcublasLt.so.10
+sym, /usr/lib/aarch64-linux-gnu/libcublas.so.10
+lib, /usr/include/cublas_api.h
+lib, /usr/include/cublasLt.h
+lib, /usr/include/cublasXt.h
+lib, /usr/include/cublas.h
+lib, /usr/include/cublas_v2.h
+sym, /usr/loca/cuda
