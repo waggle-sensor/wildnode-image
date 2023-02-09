@@ -55,7 +55,7 @@ RUN add-apt-repository "deb [arch=arm64] https://download.docker.com/linux/ubunt
 RUN apt-get update && apt-get install -y \
     docker-ce=5:19.03.13~3-0~ubuntu-bionic \
     docker-ce-cli=5:19.03.13~3-0~ubuntu-bionic \
-    containerd.io=1.3.7-1
+    containerd.io=1.6.8-1
 # disable docker from auto-start on boot (will be enabled in factory provision)
 RUN systemctl disable docker.service
 ## Install docker - end
