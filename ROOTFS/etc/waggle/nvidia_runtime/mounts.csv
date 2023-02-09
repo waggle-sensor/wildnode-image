@@ -122,3 +122,11 @@ dir, /usr/lib/python3.6/dist-packages/tensorrt
 dir, /usr/lib/python3.6/dist-packages/graphsurgeon
 dir, /usr/lib/python3.6/dist-packages/uff
 dir, /usr/src/tensorrt
+sym, /usr/lib/libvisionworks_sfm.so
+sym, /usr/lib/libvisionworks_sfm.so.0.90
+lib, /usr/lib/libvisionworks_sfm.so.0.90.4
+lib, /usr/lib/libvisionworks.so.1.6.0
+sym, /usr/lib/libvisionworks.so
+sym, /usr/lib/libvisionworks_tracking.so
+sym, /usr/lib/libvisionworks_tracking.so.0.88
+lib, /usr/lib/libvisionworks_tracking.so.0.88.2
