@@ -53,8 +53,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
 RUN add-apt-repository "deb [arch=arm64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 RUN apt-get update && apt-get install -y \
-    docker-ce=5:19.03.13~3-0~ubuntu-bionic \
-    docker-ce-cli=5:19.03.13~3-0~ubuntu-bionic \
+    docker-ce=5:23.0.0-1~ubuntu.18.04~bionic \
+    docker-ce-cli=5:23.0.0-1~ubuntu.18.04~bionic \
     containerd.io=1.6.8-1
 # disable docker from auto-start on boot (will be enabled in factory provision)
 RUN systemctl disable docker.service
