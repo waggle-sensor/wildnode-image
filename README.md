@@ -3,6 +3,7 @@
 **Table of Contents**
 - [Wild Waggle Node Image Build](#wild-waggle-node-image-build)
 - [The Build Chain Overview](#the-build-chain-overview)
+  - [Build Procedure Summary](#build-procedure-summary)
   - [Build Chain Repositories](#build-chain-repositories)
 - [Open Credentials and Expected Customizations](#open-credentials-and-expected-customizations)
 - [Unit Testing](#unit-testing)
@@ -48,6 +49,38 @@ To produced a "private artifact" (containing secrets) a customized repository wi
 - The (4) customizations are "overlayed" on top of the (3) public operating system files and then combined with the L4T BSP (1) bootloader and (2) kernel.
 
 > The above build-chain outlines the specifics to build the Connect Tech Photon Build w/ Waggle OS. When building without the Waggle bootloader and kernel the L4T BSP is provided by NVidia as a L4T tarball (see below for details).
+
+## Build Procedure Summary
+
+The building procedure consists of many steps and the summary of those steps is outlined here:
+
+> Note: for the purpose of this summary a standard Waggle file system "open" public build will be demonstrated.
+
+1. The build procedure is triggered via the `./build.sh` script (see: [Build Guides](./guides/build-guides/README.md) for usage instructions).
+
+2. The `./build.sh` script kicks off the `docker` build (`Dockerfile.rootfs`) of the base custom Waggle OS filesystem.
+
+    Starting with an `Ubuntu` based operating system, various Debian packages, K3S, Waggle specific packages, and the custom files (`./ROOTFS`) are added. The resulting image (`nx_build_rootfs:custom_base`) is a Waggle customized `Ubuntu` based file system.
+
+3. The build script then kicks off a 2nd `docker` build (`Dockerfile.rootfs_gpu`) to add GPU support to the previously built base Waggle OS filesystem.
+
+    Starting with the previously build file system (`nx_build_rootfs:custom_base`) GPU (i.e. `cuda`) support is added to the file system (`nx_build_rootfs:custom`).
+
+4. The build script then kicks off a 3rd `docker` build (`Dockerfile`) to create the build environment to run the NVidia specific tools to produce the final "mass flash" artifact.
+
+    During this step the entire file system (`nx_build_rootfs:custom`) is copied into the build environment as `rootfs`.
+
+5. The build script then executes the `./create_image.sh` script within the build environment.
+
+6. The `./create_images.sh` script performs various steps to produce the resulting "mass flash" artifact.
+
+    The image creation process performs various steps:
+     - The RPI PXE boot image is created (for the `/media/rpi` partition)
+     - The "Photon" specific scripts are executed to install NVidia L4T specific binaries, kernel and bootloader
+     - Other last minute `ROOTFS` file system changes are made
+     - Custom L4T build system changes are made (ex. adds `/media/rpi` partition & custom Waggle bootloader)
+     - Final version file is created on the resulting `ROOTFS` file system
+     - NVidia "mass flash" tool is executed, creating the "mass flash" artifact
 
 ## Build Chain Repositories
 
