@@ -203,6 +203,8 @@ sudo ./nvmflash.sh
 The flashing procedure will take several minutes and the board should
 automatically reboot to a standard Linux terminal upon completion.
 
+> Note: during flashing it can be helpful to watch the serial console to see progress.  See the [Access Serial Console](./50_serial.md) guide for more details.
+
 Proceed to [Validate](./03_validate.md)
 
 

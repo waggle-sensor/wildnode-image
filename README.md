@@ -20,7 +20,7 @@ Creates artifact(s) containing images for all bootloader, kernel and file system
 Build options allow suppling an external base rootfs (i.e. NVidia sample rootfs) or building a custom Waggle rootfs from the `Dockerfile.rootfs`. Supports creating artifacts for the [NVidia Jetson NX Developer Kit](https://developer.nvidia.com/embedded/jetson-xavier-nx-devkit) and the [Connect Tech Photon production unit](https://connecttech.com/jetson/nvidia-jetson-support/jetson-xavier-nx-support/).
 
 For guides on building, flashing and usage:
-- [Build Guides](./guides/build-guides/README.md) (building & flashing)
+- [Build Guides](./guides/build-guides/README.md) (building, flashing, & serial console access)
 - [Usage Guides](./guides/usage-guides/README.md) (post-installation system customizations)
 
 # The Build Chain Overview
