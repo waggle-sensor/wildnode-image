@@ -51,13 +51,7 @@ complete provisioning.  This will be done automatically by the `-r` option.
 
 # Monitoring the Factory Provisioning
 
-All provisioning activity is logged to a `syslog` log file: `/var/log/waggle/factory-provision.log`.  To monitor simple execute:
-
-```
-/var/log/waggle/factory-provision.log
-```
-
-or
+All provisioning activity is logged to the basic journal logging system.
 
 ```
 journalctl -f  | grep waggle-factory-provision
