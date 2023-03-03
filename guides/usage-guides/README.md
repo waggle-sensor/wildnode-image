@@ -6,3 +6,4 @@ The following documentation contains usage guides for various "post-installation
 2. [Configure Custom Wifi AP as Primary Uplink Route](./02_custom_wifi_config.md)
 3. [Switching To and From Recovery Mode](./03_switch_to_recovery.md)
 4. [Testing System is Functioning Correctly](./04_testing.md)
+5. [Replacing Hardware (i.e. RPi)](./05_replacing_hw.md)
