@@ -18,7 +18,7 @@ The following are the steps to identify what mode the node is currently operatin
 During system boot the Message of The Day (MOTD) will print the current running mode of the system. But you can also identify the current running mode by running the following command.
 
 ```bash
-$ /etc/update-motd.d/05-waggle | grep "Boot mode"
+$ bash /etc/update-motd.d/05-waggle | grep "Boot mode"
 ```
 
 Normal mode:
